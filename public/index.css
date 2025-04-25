@@ -196,6 +196,7 @@ body {
     text-align: center;
     position: relative;
     overflow: hidden;
+    display: none; /* Hide everything by default */
 }
 
 .hero::before {
@@ -232,6 +233,7 @@ body {
     width: 100%;
     margin: 0 auto;
     padding: 3rem 2rem;
+    display: none; /* Hide everything by default */
 }
 
 .app-container {
@@ -379,6 +381,76 @@ body {
     display: none;
 }
 
+/* Welcome screen styles */
+.welcome-screen {
+    display: block;
+    min-height: calc(100vh - 64px);
+    background: linear-gradient(135deg, var(--bg-main) 0%, var(--bg-secondary) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.welcome-container {
+    max-width: 900px;
+    text-align: center;
+    background: var(--bg-secondary);
+    border-radius: 24px;
+    padding: 4rem 2rem;
+    box-shadow: 0 10px 30px -5px var(--box-shadow);
+    border: 1px solid var(--border-color);
+}
+
+.welcome-content h1 {
+    font-size: 2.75rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.welcome-content h1 .highlight {
+    color: var(--accent-color);
+}
+
+.welcome-content .free-text {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-color);
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    letter-spacing: 0.05em;
+}
+
+.welcome-content p {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    margin-bottom: 2.5rem;
+    opacity: 0.9;
+}
+
+.welcome-actions {
+    margin-top: 2rem;
+}
+
+.welcome-button {
+    background: var(--button-gradient);
+    color: white;
+    border: none;
+    padding: 1.25rem 3rem;
+    border-radius: 12px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.welcome-button:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px -5px var(--box-shadow);
+}
+
 @media (max-width: 768px) {
     .hero h1 {
         font-size: 2.5rem;
@@ -398,5 +470,18 @@ body {
 
     .drag-area {
         padding: 2rem;
+    }
+
+    .welcome-content h1 {
+        font-size: 2rem;
+    }
+    
+    .welcome-content .free-text {
+        font-size: 1.75rem;
+    }
+    
+    .welcome-button {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
     }
 }
