@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="400" height="200">
+  <style>
+    @keyframes squeezeFile {
+      0%, 100% {
+        d: path('M80 30 h40 v50 h-40 z');
+      }
+       10% {
+        <!-- d: path('M80 30 q20 15 40 0 v50 q-20 -15 -40 0 z'); -->
+        d: path('M80 30 q20 5 40 0 v50 q-20 -5 -40 0 z');
+      }
+      20% {
+        <!-- d: path('M80 30 q20 15 40 0 v50 q-20 -15 -40 0 z'); -->
+        d: path('M80 30 q20 10 42 0 v50 q-20 -10 -42 0 z');
+      }
+      30% {
+        <!-- d: path('M80 30 q20 15 40 0 v50 q-20 -15 -40 0 z'); -->
+        d: path('M80 30 q20 15 45 0 v50 q-20 -15 -45 0 z');
+      }
+      50% {
+        d: path('M80 30 q20 25 50 0 v50 q-20 -25 -50 0 z');
+      }
+    }
+
+    @keyframes moveArrowsup {
+      0%, 100% { transform: translateY(30px); }
+      50% { transform: translateY(15px); }
+    }
+
+    @keyframes moveArrowsdwn {
+      0%, 100% { transform: translateY(-30px); }
+      50% { transform: translateY(-10px); }
+    }
+    #file {
+      animation: squeezeFile 1.5s infinite ease-in-out;
+      <!-- fill: #ffcc66; -->
+      stroke: #ff9900;
+      stroke-width: 2;
+    }
+
+    #arrowLeft {
+      animation: moveArrowsup 1.5s infinite ease-in-out;
+      transform-origin: center;
+    }
+
+    #arrowRight {
+      animation: moveArrowsdwn 1.5s infinite ease-in-out;
+      transform-origin: center;
+      animation-direction: reverse;
+    }
+  </style>
+
+  <!-- File Frame -->
+  <path id="file" d="M80 30 h40 v50 h-40 z" />
+<!-- Up Arrow -->
+<polygon id="arrowLeft" points="95,60 100,55 105,60" fill="#ff9900" />
+
+<!-- Down Arrow -->
+<polygon id="arrowRight" points="95,45 100,50 105,45" fill="#ff9900" />
+</svg>

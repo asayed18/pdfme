@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background -->
+  <rect width="200" height="200" fill="#f9fafb" />
+
+  <!-- File Icon -->
+  <g>
+    <rect x="60" y="50" width="80" height="100" rx="10" fill="#3b82f6" id="file" />
+    <polygon points="100,50 140,70 100,70" fill="#2563eb" id="file-arrow" />
+  </g>
+
+  <!-- Compression Effect -->
+  <g id="compression-lines" fill="#d1d5db">
+    <rect x="70" y="110" width="60" height="5" rx="2.5" />
+    <rect x="70" y="120" width="60" height="5" rx="2.5" />
+    <rect x="70" y="130" width="60" height="5" rx="2.5" />
+  </g>
+
+  <style>
+    /* File Animation */
+    #file {
+      animation: compress 1.2s infinite cubic-bezier(0.7, 0, 0.3, 1);
+      transform-origin: center;
+    }
+
+    /* Arrow Animation */
+    #file-arrow {
+      animation: arrow-move 1.2s infinite cubic-bezier(0.7, 0, 0.3, 1);
+    }
+
+    /* Compression Lines Animation */
+    #compression-lines rect {
+      animation: fade-lines 1.2s infinite cubic-bezier(0.7, 0, 0.3, 1);
+    }
+
+    /* Keyframes for File Compression */
+    @keyframes compress {
+      0%, 100% {
+        transform: scaleY(1);
+      }
+      50% {
+        transform: scaleY(0.5);
+      }
+    }
+
+    /* Keyframes for Arrow Movement */
+    @keyframes arrow-move {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(25px);
+      }
+    }
+
+    /* Keyframes for Compression Lines */
+    @keyframes fade-lines {
+      0%, 100% {
+        opacity: 1;
+        transform-origin: scaleY(1);
+      }
+      50% {
+        opacity: 0.5;
+        <!-- transform: translateY(20px); -->
+        transform: scaleY(0.85);
+      }
+    }
+  </style>
+</svg>

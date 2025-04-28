@@ -1,74 +1,96 @@
 <svg xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" fill-rule="evenodd" clip-rule="evenodd" viewBox="-300 0 900 500">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="pdfGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f56565" />
+      <stop offset="100%" stop-color="#c53030" />
+    </linearGradient>
+    
+    <radialGradient id="heartGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#ff6b6b" />
+      <stop offset="100%" stop-color="#c92a2a" />
+    </radialGradient>
+    
+    <linearGradient id="wingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffc9c9" />
+      <stop offset="100%" stop-color="#ff8787" />
+    </linearGradient>
+    
+    <!-- Glow filter -->
+    <filter id="heartGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
   <style>
-    /* Keyframes for butterfly animation */
-    @keyframes butterfly {
-      0% {
-        transform: translate(320px, 300px) scale(2.3);
-      }
-      20% {
-        transform: translate(320px, 280px) scale(2.3); /* Moves up slightly */
-      }
-      25% {
-        transform: translate(320px, 280px) scale(2.5, 2.2); /* Expands like wings flapping */
-      }
-      27% {
-        transform: translate(320px, 280px) scale(2.1, 2.5); /* Collapses slightly */
-      }
-      28% {
-        transform: translate(320px, 280px) scale(2.5, 2.2); /* Expands like wings flapping */
-      }
-      30% {
-        transform: translate(320px, 280px) scale(2.1, 2.5); /* Collapses slightly */
-      }
-      31% {
-        transform: translate(320px, 280px) scale(2.5, 2.2); /* Expands like wings flapping */
-      }
-      33% {
-        transform: translate(320px, 280px) scale(2.1, 2.5); /* Collapses slightly */
-      }
-      34% {
-        transform: translate(320px, 280px) scale(2.5, 2.2); /* Expands like wings flapping */
-      }
-      36% {
-        transform: translate(320px, 280px) scale(2.1, 2.5); /* Collapses slightly */
-      }
-      37% {
-        transform: translate(320px, 280px) scale(2.5, 2.2); /* Expands like wings flapping */
-      }
-      39% {
-        transform: translate(320px, 280px) scale(2.1, 2.5); /* Collapses slightly */
-      }
-      40% {
-        transform: translate(320px, 280px) scale(2.5, 2.2); /* Expands like wings flapping */
-      }
-      47% {
-        transform: translate(320px, 280px) scale(2.1, 2.5); /* Collapses slightly */
-      }
-      48% {
-        transform: translate(320px, 280px) scale(2.5, 2.2); /* Expands like wings flapping */
-      }
-      55% {
-        transform: translate(320px, 280px) scale(2.1, 2.5); /* Collapses slightly */
-      }
-      60% {
-        transform: translate(320px, 300px) scale(2.3); /* Returns to original size and position */
-      }
-      100% {
-        transform: translate(320px, 300px) scale(2.3);
-      }
+    /* Heart rotation - exactly 5 seconds */
+    @keyframes rotateHeart {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Wing flapping - exactly 2 seconds, synchronized */
+    @keyframes flapWings {
+      0%, 100% { transform: scaleX(1); }
+      50% { transform: scaleX(1.3); }
+    }
+    
+    /* Gentle float animation */
+    @keyframes floatAnimation {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    #heart {
+      transform-origin: center;
+      animation: rotateHeart 5s infinite linear;
+    }
+    
+    /* Using the same animation for both wings */
+    .wing {
+      animation: flapWings 2s infinite ease-in-out;
+    }
+    
+    #leftWing {
+      transform-origin: right center;
+    }
+    
+    #rightWing {
+      transform-origin: left center;
+    }
+    
+    #flyingHeartGroup {
+      transform: translate(150px, 250px);
+      animation: floatAnimation 3s infinite ease-in-out;
     }
   </style>
 
-  <!-- PDF Icon -->
-  <path fill-rule="nonzero" d="M59.904 0H277.45a9.13 9.13 0 017.303 3.641l110.781 119.851a9.069 9.069 0 012.419 6.179H398v322.613c0 16.401-6.783 31.384-17.651 42.253-10.87 10.87-25.855 17.651-42.255 17.651H59.904c-16.421 0-31.422-6.756-42.294-17.628C6.763 483.714 0 468.75 0 452.284V59.906C0 43.422 6.739 28.44 17.59 17.59 28.44 6.739 43.42 0 59.904 0zM18.289 339.085h361.422V147.794c-30.513 0-71.711 4.559-96.489-16.605-12.663-10.821-19.766-26.266-21.174-45.471a9.129 9.129 0 01-.086-1.254V18.289H59.904c-11.435 0-21.839 4.686-29.384 12.231-7.545 7.544-12.231 17.949-12.231 29.386v279.179zm361.422 18.495H18.289v94.704c0 11.413 4.705 21.802 12.251 29.347 7.566 7.566 17.984 12.268 29.364 12.268h278.19c11.355 0 21.757-4.723 29.325-12.292 7.569-7.569 12.292-17.969 12.292-29.323V357.58zm-68.556-109.127H287.47v32.322h-27.864v-87.076h57.121l-3.483 22.292H287.47v11.703h23.685v20.759zM166.61 280.775v-87.076h39.008c15.698 0 26.472 3.345 32.322 10.033 5.853 6.686 8.78 17.854 8.78 33.505 0 15.651-2.927 26.819-8.78 33.507-5.85 6.688-16.624 10.031-32.322 10.031H166.61zm39.427-64.784h-11.564v42.493h11.564c3.809 0 6.571-.44 8.289-1.323 1.718-.882 2.579-2.903 2.579-6.06v-27.725c0-3.158-.861-5.178-2.579-6.061-1.718-.882-4.48-1.324-8.289-1.324zm-78.785 43.747h-18.111v21.037H81.277v-87.076h43.886c19.969 0 29.952 10.728 29.952 32.184 0 11.796-2.6 20.526-7.801 26.192-1.949 2.136-4.644 3.949-8.08 5.433-3.436 1.488-7.431 2.23-11.982 2.23zm-18.111-43.747v21.456h6.409c3.343 0 5.782-.348 7.314-1.045 1.533-.697 2.299-2.298 2.299-4.806v-9.753c0-2.507-.766-4.111-2.299-4.806-1.532-.697-3.971-1.046-7.314-1.046h-6.409zm11.322 219.91c-5.207 0-9.43-4.224-9.43-9.431 0-5.207 4.223-9.431 9.43-9.431H273.73c5.207 0 9.431 4.224 9.431 9.431 0 5.207-4.224 9.431-9.431 9.431H120.463zM280.25 25.577v58.847c1.041 14.194 6.017 25.376 14.832 32.907 19.07 16.285 57.587 12.174 81.231 12.174L280.25 25.577z"/>
+  <!-- PDF Icon - scaled down to leave more room for the heart -->
+  <g transform="scale(0.8) translate(0, 50)">
+    <path fill="url(#pdfGradient)" fill-rule="nonzero" d="M59.904 0H277.45a9.13 9.13 0 017.303 3.641l110.781 119.851a9.069 9.069 0 012.419 6.179H398v322.613c0 16.401-6.783 31.384-17.651 42.253-10.87 10.87-25.855 17.651-42.255 17.651H59.904c-16.421 0-31.422-6.756-42.294-17.628C6.763 483.714 0 468.75 0 452.284V59.906C0 43.422 6.739 28.44 17.59 17.59 28.44 6.739 43.42 0 59.904 0zM18.289 339.085h361.422V147.794c-30.513 0-71.711 4.559-96.489-16.605-12.663-10.821-19.766-26.266-21.174-45.471a9.129 9.129 0 01-.086-1.254V18.289H59.904c-11.435 0-21.839 4.686-29.384 12.231-7.545 7.544-12.231 17.949-12.231 29.386v279.179zm361.422 18.495H18.289v94.704c0 11.413 4.705 21.802 12.251 29.347 7.566 7.566 17.984 12.268 29.364 12.268h278.19c11.355 0 21.757-4.723 29.325-12.292 7.569-7.569 12.292-17.969 12.292-29.323V357.58zm-68.556-109.127H287.47v32.322h-27.864v-87.076h57.121l-3.483 22.292H287.47v11.703h23.685v20.759zM166.61 280.775v-87.076h39.008c15.698 0 26.472 3.345 32.322 10.033 5.853 6.686 8.78 17.854 8.78 33.505 0 15.651-2.927 26.819-8.78 33.507-5.85 6.688-16.624 10.031-32.322 10.031H166.61zm39.427-64.784h-11.564v42.493h11.564c3.809 0 6.571-.44 8.289-1.323 1.718-.882 2.579-2.903 2.579-6.06v-27.725c0-3.158-.861-5.178-2.579-6.061-1.718-.882-4.48-1.324-8.289-1.324zm-78.785 43.747h-18.111v21.037H81.277v-87.076h43.886c19.969 0 29.952 10.728 29.952 32.184 0 11.796-2.6 20.526-7.801 26.192-1.949 2.136-4.644 3.949-8.08 5.433-3.436 1.488-7.431 2.23-11.982 2.23zm-18.111-43.747v21.456h6.409c3.343 0 5.782-.348 7.314-1.045 1.533-.697 2.299-2.298 2.299-4.806v-9.753c0-2.507-.766-4.111-2.299-4.806-1.532-.697-3.971-1.046-7.314-1.046h-6.409zm11.322 219.91c-5.207 0-9.43-4.224-9.43-9.431 0-5.207 4.223-9.431 9.43-9.431H273.73c5.207 0 9.431 4.224 9.431 9.431 0 5.207-4.224 9.431-9.431 9.431H120.463zM280.25 25.577v58.847c1.041 14.194 6.017 25.376 14.832 32.907 19.07 16.285 57.587 12.174 81.231 12.174L280.25 25.577z"/>
+  </g>
 
-  <!-- Heart with Butterfly Animation -->
-  <g style="transform-origin: 320px 300px; animation: butterfly 5s infinite ease-in-out;">
-    <path d="M10 30
-           A 20 20 0 0 1 50 30
-           A 20 20 0 0 1 90 30
-           Q 90 60 50 90
-           Q 10 60 10 30 Z"
-          fill="red" />
+  <!-- Flying Heart with Wings - repositioned to be fully visible -->
+  <g id="flyingHeartGroup">
+    <!-- Heart with exactly 5 second rotation -->
+    <g id="heart" filter="url(#heartGlow)">
+      <path fill="url(#heartGradient)" d="M0 30
+             C -10 15, -30 0, -30 -20
+             C -30 -35, -15 -40, 0 -25
+             C 15 -40, 30 -35, 30 -20
+             C 30 0, 10 15, 0 30 Z" />
+    </g>
+    
+    <!-- Wings with exactly 2 seconds flapping - using same class for synchronization -->
+    <path id="leftWing" class="wing" fill="url(#wingGradient)" d="M-30 -5
+           C -45 -20, -70 -15, -85 5
+           C -95 20, -75 30, -50 20
+           C -35 10, -30 0, -30 -5 Z" />
+           
+    <path id="rightWing" class="wing" fill="url(#wingGradient)" d="M30 -5
+           C 45 -20, 70 -15, 85 5
+           C 95 20, 75 30, 50 20
+           C 35 10, 30 0, 30 -5 Z" />
   </g>
 </svg>
