@@ -1,9 +1,31 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
+import type {
+  DraggableProvided,
+  DraggableStateSnapshot,
+  DroppableProvided,
+  DroppableStateSnapshot,
+  DropResult,
+  DragStart
+} from 'react-beautiful-dnd';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Button from '../atoms/Button';
+import { generateFileHash } from '../../utils/fileUtils';
+
+interface FileItem {
+  id: string;
+  file: File;
+}
+
+interface FileListItemProps {
+  fileItem: FileItem;
+  index: number;
+  provided: DraggableProvided;
+  snapshot: DraggableStateSnapshot;
+  onRemove: (index: number) => void;
+}
 
 // Creating a memoized list item component to prevent unnecessary re-renders
-const FileListItem = memo(({ fileItem, index, provided, snapshot, onRemove }) => {
+const FileListItem = memo(({ fileItem, index, provided, snapshot, onRemove }: FileListItemProps) => {
   return (
     <li
       ref={provided.innerRef}
@@ -11,38 +33,45 @@ const FileListItem = memo(({ fileItem, index, provided, snapshot, onRemove }) =>
       className={snapshot.isDragging ? 'dragging' : ''}
       style={{
         ...provided.draggableProps.style,
-        // Disable transitions during drag to prevent flashing
-        transition: snapshot.isDragging ? 'none' : provided.draggableProps.style?.transition
+        transition: snapshot.isDragging ? 'none' : provided.draggableProps.style?.transition,
+        maxWidth: '100%',
+        overflow: 'hidden'
       }}
     >
-      <div className="file-item">
-        
-        {/* Drag handle on the right */}
+      <div className="file-item" style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
         <div 
           className="drag-handle"
           {...provided.dragHandleProps}
           title="Drag to reorder"
+          style={{ flexShrink: 0, padding: '0 8px' }}
         >
           <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2">
             <path d="M8 9h8M8 12h8M8 15h8"></path>
           </svg>
-        </div>        
-        {/* File name in the middle with ellipsis and tooltip */}
-        <div className="file-name-container">
+        </div>
+        
+        <div className="file-name-container" style={{ flex: 1, minWidth: 0 }}>
           <span 
             className="file-name" 
-            title={fileItem.file.name} // Tooltip on hover shows full filename
+            title={fileItem.file.name}
+            style={{
+              display: 'block',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
           >
             {fileItem.file.name}
           </span>
         </div>
-        {/* Remove button on the left */}
+        
         <Button 
           variant="danger"
           className="remove-button"
           onClick={() => onRemove(index)}
           aria-label="Remove file"
           title="Remove file"
+          style={{ flexShrink: 0 }}
         >
           <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
@@ -50,8 +79,7 @@ const FileListItem = memo(({ fileItem, index, provided, snapshot, onRemove }) =>
             <line x1="10" y1="11" x2="10" y2="17"></line>
             <line x1="14" y1="11" x2="14" y2="17"></line>
           </svg>
-          </Button>
-        
+        </Button>
       </div>
     </li>
   );
@@ -64,15 +92,21 @@ const getListKey = (files) => {
   return `file-list-${files.length}`;
 };
 
-const SortableFileList = ({ files, onFilesReordered, onFileRemoved }) => {
+interface SortableFileListProps {
+  files: FileItem[];
+  onFilesReordered: (files: FileItem[]) => void;
+  onFileRemoved: (index: number) => void;
+}
+
+const SortableFileList = ({ files, onFilesReordered, onFileRemoved }: SortableFileListProps) => {
   // Create stable reference for the files prop
-  const filesRef = useRef(files);
+  const filesRef = useRef<FileItem[]>(files);
   // This state tracks only if dragging is happening
   const [isDragging, setIsDragging] = useState(false);
   // Track when we should prevent animation flashes
-  const preventAnimationRef = useRef(false);
+  const preventAnimationRef = useRef<boolean>(false);
   // Track the currently dragged item index
-  const draggedItemIndexRef = useRef(null);
+  const draggedItemIndexRef = useRef<number | null>(null);
   
   // Update reference when files prop changes
   useEffect(() => {
@@ -81,7 +115,7 @@ const SortableFileList = ({ files, onFilesReordered, onFileRemoved }) => {
     }
   }, [files, isDragging]);
 
-  const onDragStart = (start) => {
+  const onDragStart = (start: DragStart) => {
     setIsDragging(true);
     preventAnimationRef.current = true;
     
@@ -97,7 +131,7 @@ const SortableFileList = ({ files, onFilesReordered, onFileRemoved }) => {
     }
   };
 
-  const onDragEnd = (result) => {
+  const onDragEnd = (result: DropResult) => {
     setIsDragging(false);
     
     // Remove dragging class
@@ -154,7 +188,7 @@ const SortableFileList = ({ files, onFilesReordered, onFileRemoved }) => {
       </h3>
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <Droppable droppableId="file-list-droppable" type="FILES">
-          {(provided, snapshot) => (
+          {(provided: DroppableProvided, snapshot: DroppableStateSnapshot) => (
             <ul 
               key={preventAnimationRef.current ? 'dragging' : getListKey(files)}
               className={`file-list sortable ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
@@ -165,23 +199,26 @@ const SortableFileList = ({ files, onFilesReordered, onFileRemoved }) => {
                 transition: isDragging ? 'none' : undefined
               }}
             >
-              {files.map((fileItem, index) => (
-                <Draggable 
-                  key={fileItem.id} 
-                  draggableId={fileItem.id} 
-                  index={index}
-                >
-                  {(provided, snapshot) => (
-                    <FileListItem
-                      fileItem={fileItem}
-                      index={index}
-                      provided={provided}
-                      snapshot={snapshot}
-                      onRemove={handleFileRemoved}
-                    />
-                  )}
-                </Draggable>
-              ))}
+              {files.map((fileItem, index) => {
+                const draggableId = fileItem.id || generateFileHash(fileItem.file);
+                return (
+                  <Draggable 
+                    key={draggableId}
+                    draggableId={draggableId}
+                    index={index}
+                  >
+                    {(provided, snapshot) => (
+                      <FileListItem
+                        fileItem={fileItem}
+                        index={index}
+                        provided={provided}
+                        snapshot={snapshot}
+                        onRemove={handleFileRemoved}
+                      />
+                    )}
+                  </Draggable>
+                );
+              })}
               {provided.placeholder}
             </ul>
           )}

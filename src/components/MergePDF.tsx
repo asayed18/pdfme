@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
-import FileDropZone from './molecules/FileDropZone';
+import { FileDropZone } from './atoms/FileDropZone';
 import SortableFileList from './molecules/SortableFileList';
 import Button from './atoms/Button';
+import { MessageBox } from './atoms/MessageBox';
 import { generateFileHash } from '../utils/fileUtils';
 import { trackEvent } from '../utils/analytics';
 
 const MergePDF = () => {
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<{ id: string; file: File }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  const handleFilesAdded = (newFiles) => {
+  const handleFilesAdded = (newFiles: File[]) => {
     setError(null);
     
     if (newFiles.length === 0) {
@@ -28,21 +29,27 @@ const MergePDF = () => {
     setFiles(prevFiles => [...prevFiles, ...filesWithIds]);
     
     // Track file upload event
-    trackEvent('Files', 'Upload', 'PDF Files', newFiles.length);
+    trackEvent('Files', 'Upload');
   };
 
   const handleFileRemoved = (index) => {
     setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
     
     // Track file removal event
-    trackEvent('Files', 'Remove', 'PDF File');
+    trackEvent('Files', 'Remove');
   };
 
-  const handleFilesReordered = (reorderedFiles) => {
-    setFiles(reorderedFiles);
+  const handleFilesReordered = (reorderedFiles: { id: string; file: File }[]) => {
+    // Ensure each file has a valid ID
+    const filesWithValidIds = reorderedFiles.map(fileItem => ({
+      id: fileItem.id || generateFileHash(fileItem.file),
+      file: fileItem.file
+    }));
+    
+    setFiles(filesWithValidIds);
     
     // Track files reordering event
-    trackEvent('Files', 'Reorder', 'PDF Files');
+    trackEvent('Files', 'Reorder');
   };
 
   const mergePDFs = async () => {
@@ -51,7 +58,7 @@ const MergePDF = () => {
     setSuccess(false);
     
     // Track merge attempt event
-    trackEvent('PDF', 'Merge Attempt', 'PDF Files', files.length);
+    trackEvent('PDF', 'Merge Attempt');
     
     try {
       // Create a new PDF document
@@ -88,7 +95,7 @@ const MergePDF = () => {
       URL.revokeObjectURL(downloadUrl);
       
       // Track successful merge event
-      trackEvent('PDF', 'Merge Success', 'PDF Files', files.length);
+      trackEvent('PDF', 'Merge Success');
       
       // Show success message
       setSuccess(true);
@@ -97,74 +104,53 @@ const MergePDF = () => {
       setError(error.message || 'An error occurred while merging the PDFs. Please try again.');
       
       // Track error event
-      trackEvent('Error', 'Merge Error', error.message);
+      trackEvent('Error', 'Merge Error');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <>
-      <div className="hero">
-        <div className="hero-content">
-          <h1>PDF Merger</h1>
-          <p>Easily combine multiple PDF files into a single document with our powerful PDF merger tool.</p>
-        </div>
-      </div>
+    <div className="app-container">
+      {error && (
+        <MessageBox
+          type="error"
+          message={error}
+          onDismiss={() => setError(null)}
+        />
+      )}
+      
+      {success && (
+        <MessageBox
+          type="success"
+          message="Your PDFs were successfully merged!"
+          onDismiss={() => setSuccess(false)}
+        />
+      )}
 
-      <div className="container">
-        {/* Ad space for top ad */}
-        <div className="ad-space ad-space-top">
-          {/* AdSense will automatically fill this space */}
-        </div>
-        
-        <div className="app-container full-width">
-          {/* Show error message if there's an error */}
-          {error && (
-            <div className="error-message">
-              <p>{error}</p>
-              <button onClick={() => setError(null)}>Dismiss</button>
-            </div>
-          )}
-          
-          {/* Show success message if operation was successful */}
-          {success && (
-            <div className="success-message">
-              <p>Your PDFs were successfully merged!</p>
-              <button onClick={() => setSuccess(false)}>Dismiss</button>
-            </div>
-          )}
-          
-          <FileDropZone 
-            onFilesAdded={handleFilesAdded}
-            label="Drag & Drop PDF Files Here"
-            buttonText="Select PDF Files"
-            acceptedFileTypes="application/pdf"
-            multiple={true}
-          />
+      <FileDropZone 
+        onFilesAdded={handleFilesAdded}
+        label="Drag & Drop PDF Files Here"
+        buttonText="Select PDF Files"
+        acceptedFileTypes="application/pdf"
+        multiple={true}
+      />
 
-          <SortableFileList 
-            files={files}
-            onFilesReordered={handleFilesReordered}
-            onFileRemoved={handleFileRemoved}
-          />
+      <SortableFileList 
+        files={files}
+        onFilesReordered={handleFilesReordered}
+        onFileRemoved={handleFileRemoved}
+      />
 
-          <Button 
-            variant="primary"
-            isLoading={isLoading}
-            disabled={files.length === 0}
-            onClick={mergePDFs}
-          >
-            {isLoading ? 'Merging...' : 'Merge / Download'}
-          </Button>
-        </div>
-        
-        {/* Ad space for bottom ad */}
-        <div className="ad-space ad-space-bottom">
-          {/* AdSense will automatically fill this space */}
-        </div>
-      </div>
-    </>
+      <Button 
+        variant="primary"
+        isLoading={isLoading}
+        disabled={files.length === 0}
+        onClick={mergePDFs}
+      >
+        {isLoading ? 'Merging...' : 'Merge / Download'}
+      </Button>
+    </div>
   );
 };
 

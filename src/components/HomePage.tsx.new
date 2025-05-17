@@ -1,0 +1,150 @@
+import React from "react";
+import styled from "styled-components";
+import MergeHoverableIcon from "./atoms/MergeHoverableIcon";
+import SqueezeHoverableIcon from "./atoms/SqueezeHoverableIcon";
+import PageEditHoverableIcon from "./atoms/PageEditHoverableIcon";
+
+const HomeContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+`;
+
+const Title = styled.h1`
+  font-family: var(--font-heading);
+  font-size: 6rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  text-align: center;
+  margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    font-size: 3rem;
+  }
+`;
+
+const WelcomeSection = styled.div`
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+
+    @media (max-width: 768px) {
+      font-size: 2rem;
+    }
+
+    .highlight {
+      color: var(--accent-color);
+    }
+  }
+
+  h2.free-text {
+    color: var(--accent-color);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+
+    @media (max-width: 768px) {
+      font-size: 1.2rem;
+    }
+  }
+
+  p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+
+    @media (max-width: 768px) {
+      font-size: 1rem;
+    }
+  }
+`;
+
+const ToolsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ToolCard = styled.button`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+  }
+
+  .tool-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .tool-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+`;
+
+interface HomePageProps {
+  onToolSelect: (tool: "merge" | "compress" | "remove") => void;
+}
+
+const HomePage: React.FC<HomePageProps> = ({ onToolSelect }) => {
+  return (
+    <HomeContainer>
+      <Title>PDFMe</Title>
+      <WelcomeSection>
+        <h1>
+          The <span className="highlight">#1</span> most secure and fast app for
+          editing your pdf
+        </h1>
+        <h2 className="free-text">it's completely free</h2>
+        <p>Choose a tool below to get started</p>
+      </WelcomeSection>
+
+      <ToolsGrid>
+        <ToolCard onClick={() => onToolSelect("merge")}>
+          <MergeHoverableIcon size="60px" color="#3b82f6" />
+          <span className="tool-name">Merge PDFs</span>
+          <span className="tool-description">
+            Combine multiple PDFs into one document
+          </span>
+        </ToolCard>
+
+        <ToolCard onClick={() => onToolSelect("compress")}>
+          <SqueezeHoverableIcon size={60} color="#3b82f6" />
+          <span className="tool-name">Compress PDF</span>
+          <span className="tool-description">
+            Reduce PDF file size while maintaining quality
+          </span>
+        </ToolCard>
+
+        <ToolCard onClick={() => onToolSelect("remove")}>
+          <PageEditHoverableIcon size="60px" color="#3b82f6" />
+          <span className="tool-name">Remove Pages</span>
+          <span className="tool-description">
+            Delete unwanted pages from your PDF
+          </span>
+        </ToolCard>
+      </ToolsGrid>
+    </HomeContainer>
+  );
+};
+
+export default HomePage;

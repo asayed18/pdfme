@@ -1,6 +1,11 @@
 import React from "react";
 import styled, { keyframes } from "styled-components";
 
+
+interface ContainerProps {
+  size?: string;
+}
+
 // Keyframes for animations
 const compress = keyframes`
   0%, 100% {
@@ -32,9 +37,12 @@ const fadeLines = keyframes`
 `;
 
 // Styled components
-const Container = styled.div`
-  width: ${({ size }) => size};
-  height: ${({ size }) => size};
+const Container = styled.div.attrs<ContainerProps>((props) => ({
+  style: {
+    width: props.size || "200px",
+    height: props.size || "200px"
+  }
+}))<ContainerProps>`
   display: inline-block;
   position: relative;
   &:hover #file {
@@ -49,26 +57,29 @@ const Container = styled.div`
 `;
 
 const File = styled.rect`
-  fill: ${({ color }) => color || "#3b82f6"};
+  fill: var(--accent-color);
+  opacity: 0.7;
   transform-origin: center;
 `;
 
 const Arrow = styled.polygon`
-  fill: ${({ color }) => color || "#2563eb"};
+  fill: var(--text-secondary);
+  opacity: 0.4;
 `;
 
 const CompressionLine = styled.rect`
-  fill: #d1d5db;
+  fill: var(--text-secondary);
+  opacity: 0.3;
 `;
 
-const SqueezeHoverableIcom = ({ size = 30, color }) => {
+const SqueezeHoverableIcon = ({ size ="30px" }) => {
   return (
     <Container size={size}>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
         {/* File Icon */}
         <g>
-          <File id="file" x="60" y="50" width="80" height="100" rx="10" color={color} />
-          <Arrow id="file-arrow" points="100,50 140,70 100,70" color={color} />
+          <File id="file" x="60" y="50" width="80" height="100" rx="10" />
+          <Arrow id="file-arrow" points="100,50 140,70 100,70" />
         </g>
 
         {/* Compression Effect */}
@@ -82,4 +93,4 @@ const SqueezeHoverableIcom = ({ size = 30, color }) => {
   );
 };
 
-export default SqueezeHoverableIcom;
+export default SqueezeHoverableIcon;

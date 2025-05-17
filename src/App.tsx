@@ -1,19 +1,46 @@
-import { useState, useEffect } from 'react';
-import { PDFDocument } from 'pdf-lib';
+import { useState, useEffect, JSX } from 'react';
+import styled from 'styled-components';
 import Logo from './components/Logo';
-import Sidebar from './components/Sidebar';
-import WelcomeScreen from './components/WelcomeScreen';
+import HomePage from './components/HomePage';
 import MergePDF from './components/MergePDF';
 import CompressPDF from './components/CompressPDF';
 import RemovePagesFromPDF from './components/RemovePagesFromPDF';
+import PlaceholderImage from './components/PlaceholderImage';
+import TwoColumnLayout from './components/layout/TwoColumnLayout';
 import { initGA, pageView } from './utils/analytics';
+
+const AppContainer = styled.div`
+  margin: 0;
+  padding: 0; 
+  width: 100vw; 
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  
+  @media (max-width: 768px) {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+`;
+
+const ThemeToggleContainer = styled.div`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+`;
 
 // Google Analytics Measurement ID - replace with your actual ID
 const GA_MEASUREMENT_ID = 'GTM-KDSHQ3S2';
 
-function App() {
-  const [currentPage, setCurrentPage] = useState('');
-  const [theme, setTheme] = useState(
+// Define types for the page navigation
+type PageType = 'merge' | 'compress' | 'remove' | '';
+type ThemeType = 'light' | 'dark';
+
+function App(): JSX.Element {
+  const [currentPage, setCurrentPage] = useState<PageType>('');
+  const [theme, setTheme] = useState<ThemeType>(
     window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   );
 
@@ -24,8 +51,8 @@ function App() {
 
   useEffect(() => {
     // Handle hash changes for navigation
-    const handleHashChange = () => {
-      const hash = window.location.hash.substring(1);
+    const handleHashChange = (): void => {
+      const hash = window.location.hash.substring(1) as PageType;
       if (hash && ['merge', 'compress', 'remove'].includes(hash)) {
         setCurrentPage(hash);
       } else {
@@ -50,18 +77,18 @@ function App() {
     pageView(pagePath);
   }, [currentPage]);
 
-  const goToHomepage = () => {
+  const goToHomepage = (): void => {
     setCurrentPage('');
     // Clear the hash from the URL
     history.pushState("", document.title, window.location.pathname);
   };
 
-  const navigateToPage = (pageId) => {
+  const navigateToPage = (pageId: PageType): void => {
     setCurrentPage(pageId);
     window.location.hash = pageId;
   };
 
-  const toggleTheme = () => {
+  const toggleTheme = (): void => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
@@ -71,7 +98,7 @@ function App() {
   }, [theme]);
 
   // Render the appropriate content based on the current page
-  const renderContent = () => {
+  const renderPageContent = (): JSX.Element => {
     switch (currentPage) {
       case 'merge':
         return <MergePDF />;
@@ -80,31 +107,22 @@ function App() {
       case 'remove':
         return <RemovePagesFromPDF />;
       default:
-        return <WelcomeScreen onGetStarted={() => navigateToPage('merge')} />;
+        return <PlaceholderImage />;
     }
   };
 
   return (
-    <>
-      <nav className="menubar">
-        <div className="menubar-brand" onClick={goToHomepage}>
-          <Logo />
-          <h2>PDF Merger</h2>
-        </div>
-        <div className="menubar-actions">
-          <button className="theme-toggle" onClick={toggleTheme}>
-            {theme === 'dark' ? '☼' : '☽'}
-          </button>
-        </div>
-      </nav>
-      
-      <Sidebar 
-        currentPage={currentPage} 
-        navigateToPage={navigateToPage}
+    <AppContainer>
+      <ThemeToggleContainer>
+        <button className="theme-toggle" onClick={toggleTheme}>
+          {theme === 'dark' ? '☼' : '☽'}
+        </button>
+      </ThemeToggleContainer>
+      <TwoColumnLayout
+        leftContent={<HomePage onToolSelect={navigateToPage} />}
+        rightContent={renderPageContent()}
       />
-
-      {renderContent()}
-    </>
+    </AppContainer>
   );
 }
 

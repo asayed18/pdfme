@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App.jsx';
+import App from './App';
 import './index.css';
 // Import the warning suppression utility
 import './utils/suppressWarnings';
@@ -16,7 +16,22 @@ React.useLayoutEffect = typeof window !== 'undefined'
 
 // 2. Monkey patch useState to help with dnd state stability
 const originalCreateElement = React.createElement;
-React.createElement = function(type, props, ...children) {
+
+// Define a more specific type for the create element function
+type CreateElementType = {
+  <P extends object>(
+    type: React.FunctionComponent<P> | React.ComponentClass<P> | string,
+    props: (React.ClassAttributes<any> & P & { draggableId?: string }) | null,
+    ...children: React.ReactNode[]
+  ): React.ReactElement;
+};
+
+// Cast the function to the correct type
+(React.createElement as any) = function(
+  type: Parameters<CreateElementType>[0],
+  props: Parameters<CreateElementType>[1],
+  ...children: React.ReactNode[]
+): ReturnType<CreateElementType> {
   // Return original for non-Draggable components
   if (!props || !props.draggableId) {
     return originalCreateElement(type, props, ...children);
@@ -51,6 +66,8 @@ window.addEventListener('dragend', () => {
 });
 
 // Create root and render
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <App />
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
 );

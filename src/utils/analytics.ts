@@ -3,7 +3,7 @@
 // Initialize Google Analytics
 export const initGA = (measurementId) => {
   // Skip during development
-  if (import.meta.env.DEV) {
+  if (import.meta?.env?.DEV) {
     console.log('Google Analytics initialized in development mode (no tracking)');
     return;
   }

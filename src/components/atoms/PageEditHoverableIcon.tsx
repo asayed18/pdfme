@@ -43,93 +43,62 @@ const pencilEdit = keyframes`
   }
 `;
 
+interface ContainerProps {
+  size?: string;
+}
+
 // Styled components
-const Container = styled.div`
-  width: ${({ size }) => size || "200px"};
-  height: ${({ size }) => size || "200px"};
+const Container = styled.div.attrs<ContainerProps>((props) => ({
+  style: {
+    width: props.size || "200px",
+    height: props.size || "200px"
+  }
+}))<ContainerProps>`
   display: inline-block;
   position: relative;
   perspective: 1000px;
   &:hover #active-page {
     animation: ${pageFlip} 2s infinite ease-in-out;
   }
-  &:hover #pencil {
-    animation: ${pencilEdit} 2s infinite ease-in-out;
-  }
 `;
 
 const File = styled.rect`
-  fill: ${({ color }) => color || "#3b82f6"};
+  fill: var(--text-secondary);
+  opacity: 0.4;
   transform-origin: center;
 `;
 
 const Page = styled.rect`
-  fill: ${({ pageColor }) => pageColor || "#e6effd"};
-  stroke: ${({ strokeColor }) => strokeColor || "#c6d5f5"};
+  fill: var(--accent-color);
+  opacity: 0.7;
+  stroke: var(--text-secondary);
   stroke-width: 1;
   transform-origin: left center;
 `;
 
 const TextLine = styled.rect`
-  fill: ${({ lineColor }) => lineColor || "#6b7280"};
+  fill: var(--text-primary);
+  opacity: 0.3;
   transform-origin: center;
 `;
 
-const Pencil = styled.g`
-  transform-origin: center;
-`;
-
-const AnimatedEditingPages = ({ size, color }) => {
-  // Create lighter versions of the color for pages and strokes
-  const lightenColor = (color, amount) => {
-    // Convert hex to RGB
-    const hex = color.replace("#", "");
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    
-    // Lighten by mixing with white
-    const lighten = (value) => Math.min(255, Math.floor(value + (255 - value) * amount));
-    
-    const lightenedR = lighten(r);
-    const lightenedG = lighten(g);
-    const lightenedB = lighten(b);
-    
-    // Convert back to hex
-    return `#${lightenedR.toString(16).padStart(2, "0")}${lightenedG.toString(16).padStart(2, "0")}${lightenedB.toString(16).padStart(2, "0")}`;
-  };
-  
-  const baseColor = color || "#3b82f6";
-  const pageColor = lightenColor(baseColor, 0.85); // Very light version
-  const strokeColor = lightenColor(baseColor, 0.6); // Medium light version
-  const lineColor = lightenColor(baseColor, 0.3); // Slightly darker for text
-
+const PageEditHoverableIcon = ({ size = "30px" }) => {
   return (
     <Container size={size}>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
-        {/* File */}
-        <File x="50" y="40" width="100" height="120" rx="10" color={baseColor} />
+        {/* Base File */}
+        <File x="60" y="50" width="80" height="100" rx="10" />
         
-        {/* Static Pages */}
-        <Page x="60" y="50" width="80" height="40" rx="2" pageColor={pageColor} strokeColor={strokeColor} />
-        <Page x="60" y="95" width="80" height="40" rx="2" pageColor={pageColor} strokeColor={strokeColor} />
-        
-        {/* Active Page (that flips) */}
+        {/* Active Page */}
         <g id="active-page">
-          <Page x="60" y="50" width="80" height="40" rx="2" pageColor={pageColor} strokeColor={strokeColor} />
-          <TextLine x="70" y="60" width="60" height="3" rx="1.5" lineColor={lineColor} />
-          <TextLine x="70" y="68" width="50" height="3" rx="1.5" lineColor={lineColor} />
-          <TextLine x="70" y="76" width="55" height="3" rx="1.5" lineColor={lineColor} />
+          <Page x="70" y="60" width="60" height="80" rx="5" />
+          <TextLine x="80" y="75" width="40" height="3" rx="1.5" />
+          <TextLine x="80" y="85" width="40" height="3" rx="1.5" />
+          <TextLine x="80" y="95" width="40" height="3" rx="1.5" />
         </g>
-        
-        {/* Pencil Icon */}
-        <Pencil id="pencil">
-          <polygon points="120,70 125,65 135,75 130,80" fill="#f59e0b" />
-          <rect x="125" y="65" width="15" height="3" rx="1.5" fill="#92400e" transform="rotate(45 125 65)" />
-        </Pencil>
       </svg>
     </Container>
   );
 };
 
-export default AnimatedEditingPages;
+export default PageEditHoverableIcon;
