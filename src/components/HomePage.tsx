@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import MergeHoverableIcon from "./atoms/MergeHoverableIcon";
 import SqueezeHoverableIcon from "./atoms/SqueezeHoverableIcon";
@@ -90,7 +90,7 @@ const ToolsGrid = styled.div`
   }
 `;
 
-const ToolCard = styled.button`
+const ToolCard = styled.button<{ active: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -106,8 +106,11 @@ const ToolCard = styled.button`
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(10px);
+  transform: ${props => props.active ? "translateY(-4px)" : "none"};
+    border-color: ${props => props.active ? "var(--accent-color)" : "rgba(255, 255, 255, 0.1)"};
+    box-shadow: ${props => props.active ? "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" : "inherit"};
 
-  &:hover {
+  &:hover, .active {
     border-color: var(--accent-color);
     transform: translateY(-4px);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -148,6 +151,12 @@ interface HomePageProps {
 }
 
 const HomePage: React.FC<HomePageProps> = ({ onToolSelect }) => {
+    const [activeTool, setActive] = useState<string>("");
+    const handleToolSelect = (tool: ToolType) => {
+        setActive(tool);
+        onToolSelect(tool);
+    }
+
   return (
     <HomeContainer>
       <Title>PDFMe</Title>
@@ -161,7 +170,7 @@ const HomePage: React.FC<HomePageProps> = ({ onToolSelect }) => {
       </WelcomeSection>
 
       <ToolsGrid>
-        <ToolCard onClick={() => onToolSelect("merge")}>
+        <ToolCard onClick={() => handleToolSelect("merge")} active={activeTool == "merge"}>
           <MergeHoverableIcon size="10rem" />
           <span className="tool-name">Merge PDFs</span>
           <span className="tool-description">
@@ -169,7 +178,7 @@ const HomePage: React.FC<HomePageProps> = ({ onToolSelect }) => {
           </span>
         </ToolCard>
 
-        <ToolCard onClick={() => onToolSelect("compress")}>
+        <ToolCard onClick={() => handleToolSelect("compress")} active={activeTool == "compress"}>
           <SqueezeHoverableIcon size="10rem" />
           <span className="tool-name">Compress PDF</span>
           <span className="tool-description">
@@ -177,7 +186,7 @@ const HomePage: React.FC<HomePageProps> = ({ onToolSelect }) => {
           </span>
         </ToolCard>
 
-        <ToolCard onClick={() => onToolSelect("remove")}>
+        <ToolCard onClick={() => handleToolSelect("remove")} active={activeTool == "remove"}>
           <PageEditHoverableIcon size="10rem" />
           <span className="tool-name">Remove Pages</span>
           <span className="tool-description">

@@ -458,7 +458,97 @@ body {
   padding: 0;
 }
 
-/* File item styling - fixed positioning */
+.file-list-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.drag-instruction {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: normal;
+}
+
+.file-list.sortable {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.file-list.sortable li {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.file-list.sortable li.dragging {
+  background: var(--bg-hover);
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  gap: 0.75rem;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.file-item:hover .drag-handle {
+  opacity: 0.8;
+}
+
+.dragging .drag-handle {
+  cursor: grabbing;
+}
+
+.file-name-container {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-primary);
+}
+
+.file-list.dragging-over {
+  position: relative;
+}
+
+.file-list.dragging-over::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border: 2px dashed var(--accent-color);
+  border-radius: 0.75rem;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
 .file-list li {
   width: 100%;
   max-width: 100%;
