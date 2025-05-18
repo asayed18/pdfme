@@ -4,6 +4,8 @@ import Button from './atoms/Button';
 import { FileInfo } from './atoms/FileInfo';
 import { MessageBox } from './atoms/MessageBox';
 import styled from 'styled-components';
+import { compressPDF, CompressionLevel, formatFileSize, calculateCompressionRate } from '../utils/pdfUtils';
+import { trackEvent } from '../utils/analytics';
 
 const CompressionOptions = styled.div`
   margin: 1.5rem 0;
@@ -97,17 +99,59 @@ const CompressPDF = () => {
     }
   };
 
-  const compressPDF = async () => {
+  const [originalSize, setOriginalSize] = useState<number>(0);
+  const [compressedSize, setCompressedSize] = useState<number>(0);
+  const [compressionStats, setCompressionStats] = useState<{
+    originalSize: string;
+    compressedSize: string;
+    reductionPercent: string;
+  } | null>(null);
+  
+  const handleCompressPDF = async () => {
     if (!file) return;
 
     setIsLoading(true);
     setError(null);
+    setCompressionStats(null);
+    
+    trackEvent('PDF', 'Compress Attempt', compressionLevel);
     
     try {
-      // Compression logic here using compressionLevel
+      // Get original file size
+      const originalFileSizeBytes = file.size;
+      setOriginalSize(originalFileSizeBytes);
+      
+      // Compress the PDF
+      const compressedPdfBlob = await compressPDF(file, compressionLevel);
+      const compressedSizeBytes = compressedPdfBlob.size;
+      setCompressedSize(compressedSizeBytes);
+      
+      // Calculate compression statistics
+      const stats = {
+        originalSize: formatFileSize(originalFileSizeBytes),
+        compressedSize: formatFileSize(compressedSizeBytes),
+        reductionPercent: calculateCompressionRate(originalFileSizeBytes, compressedSizeBytes),
+      };
+      setCompressionStats(stats);
+      
+      // Create a download link for the compressed PDF
+      const downloadFileName = `${file.name.replace('.pdf', '')}_compressed.pdf`;
+      const downloadUrl = URL.createObjectURL(compressedPdfBlob);
+      const downloadLink = document.createElement('a');
+      downloadLink.href = downloadUrl;
+      downloadLink.download = downloadFileName;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      URL.revokeObjectURL(downloadUrl);
+      
+      trackEvent('PDF', 'Compress Success', compressionLevel);
+      
       setSuccess(true);
     } catch (err) {
+      console.error('Error compressing PDF:', err);
       setError(err instanceof Error ? err.message : 'Failed to compress PDF');
+      trackEvent('Error', 'Compress Error');
     } finally {
       setIsLoading(false);
     }
@@ -170,11 +214,20 @@ const CompressPDF = () => {
         </>
       )}
 
+      {compressionStats && (
+        <div className="compression-results" style={{ margin: '1.5rem 0', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '0.5rem' }}>
+          <h3 style={{ marginBottom: '0.75rem', fontSize: '1rem', fontWeight: '600' }}>Compression Results</h3>
+          <p><strong>Original Size:</strong> {compressionStats.originalSize}</p>
+          <p><strong>Compressed Size:</strong> {compressionStats.compressedSize}</p>
+          <p><strong>Size Reduction:</strong> {compressionStats.reductionPercent}%</p>
+        </div>
+      )}
+
       <Button 
         variant="primary"
         isLoading={isLoading}
         disabled={!file}
-        onClick={compressPDF}
+        onClick={handleCompressPDF}
       >
         {isLoading ? 'Compressing...' : 'Compress / Download'}
       </Button>

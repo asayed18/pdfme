@@ -506,8 +506,8 @@ body {
   cursor: grab;
   color: var(--text-secondary);
   opacity: 0.5;
-  transition: opacity 0.2s;
-  display: flex;
+  /* transition: opacity 0.2s; */
+  /* display: flex; */
   align-items: center;
 }
 

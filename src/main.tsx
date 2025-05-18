@@ -4,6 +4,8 @@ import App from './App';
 import './index.css';
 // Import the warning suppression utility
 import './utils/suppressWarnings';
+// Import PDF.js setup
+import './utils/pdfJsSetup';
 
 // Enhanced fix for react-beautiful-dnd in React 18
 // This resolves issues with Strict Mode's double-rendering and improves drag-and-drop stability
@@ -67,7 +69,5 @@ window.addEventListener('dragend', () => {
 
 // Create root and render
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+    <App />,
 );

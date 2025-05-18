@@ -159,7 +159,7 @@ const HomePage: React.FC<HomePageProps> = ({ onToolSelect }) => {
 
   return (
     <HomeContainer>
-      <Title>PDFMe</Title>
+      <Title onClick={() => setActive("")}>PDFMe</Title>
       <WelcomeSection>
         <h1>
           The <span className="highlight">#1</span> most secure/fast app for

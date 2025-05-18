@@ -1,0 +1,71 @@
+/* Drag and Drop Specific Styles for react-beautiful-dnd */
+
+/* Base styles for the list container */
+.file-list {
+  position: relative;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  z-index: 0; /* Creates a stacking context for children */
+}
+
+/* Styling for each file list item */
+.file-list li {
+  position: relative;
+  margin-bottom: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 1; /* Default z-index for items */
+}
+
+/* Explicitly apply z-index stacking for dragging items */
+.dragging {
+  cursor: grabbing !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25) !important;
+  opacity: 0.9 !important;
+  transform: scale(1.02) !important;
+  background: rgba(107, 94, 234, 0.1) !important;
+  /* Critical fix: Create a new stacking context to resolve z-index issues */
+  z-index: 9999 !important;
+  position: relative !important;
+  isolation: isolate !important;
+}
+
+/* Style for the container when being dragged over */
+.dragging-over {
+  background: rgba(107, 94, 234, 0.05);
+  border-radius: 8px;
+  transition: background 0.2s ease-in-out;
+}
+
+/* Prevent text selection during dragging */
+.dragging-in-progress {
+  user-select: none !important;
+}
+
+/* Ensure proper spacing for the placeholder */
+[data-rbd-placeholder-context-id] {
+  min-height: 2rem;
+  margin: 0.5rem 0;
+  transition: min-height 0.2s ease;
+}
+
+/* Fix for the drag handle */
+.drag-handle {
+  cursor: grab;
+}
+
+/* Ensure proper z-index stacking for all draggable elements */
+[data-rbd-draggable-id] {
+  position: relative;
+  z-index: 1;
+}
+
+/* Force the dragging item to be on top of other elements */
+[data-rbd-draggable-id][data-rbd-drag-handle-draggable-id] {
+  transition: transform 0.2s ease-out;
+}
+
+/* Hack to fix issues with overlapping during drag */
+body.dragging-in-progress [data-rbd-draggable-id]:not([data-rbd-dragged-draggable-id]) {
+  transition: transform 0.1s ease-out !important;
+}
