@@ -1,7 +1,22 @@
 // Google Analytics utility functions
 
+// Add type definitions for the global gtag function
+declare global {
+  interface Window {
+    dataLayer: any[];
+    gtag: (...args: any[]) => void;
+  }
+  
+  interface ImportMeta {
+    env: {
+      DEV: boolean;
+      [key: string]: any;
+    };
+  }
+}
+
 // Initialize Google Analytics
-export const initGA = (measurementId) => {
+export const initGA = (measurementId: string) => {
   // Skip during development
   if (import.meta?.env?.DEV) {
     console.log('Google Analytics initialized in development mode (no tracking)');
@@ -16,8 +31,8 @@ export const initGA = (measurementId) => {
 
   // Initialize the dataLayer and gtag function
   window.dataLayer = window.dataLayer || [];
-  function gtag() {
-    window.dataLayer.push(arguments);
+  function gtag(...args: any[]) {
+    window.dataLayer.push(args);
   }
   gtag('js', new Date());
   gtag('config', measurementId);
@@ -27,7 +42,7 @@ export const initGA = (measurementId) => {
 };
 
 // Track page views
-export const pageView = (path) => {
+export const pageView = (path: string) => {
   if (!window.gtag || import.meta.env.DEV) return;
   
   window.gtag('event', 'page_view', {
@@ -38,7 +53,7 @@ export const pageView = (path) => {
 };
 
 // Track events (e.g., button clicks, feature usage)
-export const trackEvent = (category, action, label = null, value = null) => {
+export const trackEvent = (category: string, action: string, label: string | null = null, value: number | null = null) => {
   if (!window.gtag || import.meta.env.DEV) return;
   
   window.gtag('event', action, {

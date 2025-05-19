@@ -17,16 +17,17 @@ const Title = styled.h1`
   font-weight: 700;
   text-align: center;
   margin-bottom: 2rem;
-  background: linear-gradient(180deg,
-    var(--accent-color) 0%,
-    var(--accent-color) 40%,
-    rgba(var(--accent-color-rgb), 0.7) 70%,
-    rgba(var(--accent-color-rgb), 0.3) 85%,
-    rgba(var(--accent-color-rgb), 0.1) 100%
+  background: linear-gradient(135deg,
+    #2196F3 0%,
+    #2196F3 30%,
+    #4CAF50 70%,
+    #4CAF50 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  text-shadow: 0 2px 20px rgba(33, 150, 243, 0.15);
+  letter-spacing: -1px;
   
   @media (max-width: 768px) {
     font-size: 3rem;
@@ -45,14 +46,16 @@ const WelcomeSection = styled.div`
     }
 
     .highlight {
-      color: var(--accent-color);
+      color: #2196F3;
+      font-weight: 700;
     }
   }
 
   h2.free-text {
-    color: var(--accent-color);
+    color: #4CAF50;
     font-size: 1.5rem;
     margin-bottom: 1rem;
+    text-shadow: 0 1px 2px rgba(76, 175, 80, 0.1);
 
     @media (max-width: 768px) {
       font-size: 1.2rem;
@@ -61,8 +64,13 @@ const WelcomeSection = styled.div`
 
   p {
     font-size: 1.2rem;
-    color: var(--text-secondary);
+    color: #555;
     margin-bottom: 2rem;
+    padding: 0.5rem 1rem;
+    display: inline-block;
+    border-radius: 4px;
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.05), rgba(76, 175, 80, 0.05));
+    border: 1px solid rgba(33, 150, 243, 0.1);
 
     @media (max-width: 768px) {
       font-size: 1rem;
@@ -99,25 +107,34 @@ const ToolCard = styled.button<{ active: boolean }>`
   width: 100%;
   max-width: 320px;
   margin: 0 auto;
-  background: rgba(255, 255, 255, 0.03);
+  background: linear-gradient(135deg, 
+    rgba(33, 150, 243, 0.03) 0%, 
+    rgba(76, 175, 80, 0.03) 100%
+  );
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: ${props => props.active ?
+    '0 10px 20px -3px rgba(33, 150, 243, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.08)' :
+    '0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
+  };
   backdrop-filter: blur(10px);
   transform: ${props => props.active ? "translateY(-4px)" : "none"};
-    border-color: ${props => props.active ? "var(--accent-color)" : "rgba(255, 255, 255, 0.1)"};
-    box-shadow: ${props => props.active ? "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" : "inherit"};
+  border-color: ${props => props.active ? "#2196F3" : "rgba(255, 255, 255, 0.1)"};
 
   &:hover, .active {
-    border-color: var(--accent-color);
+    border-color: #2196F3;
     transform: translateY(-4px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 12px 25px -5px rgba(33, 150, 243, 0.2), 0 6px 10px -5px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, 
+      rgba(33, 150, 243, 0.05) 0%, 
+      rgba(76, 175, 80, 0.05) 100%
+    );
 
     svg {
       transform: scale(1.1);
-      color: var(--accent-color);
+      color: #2196F3;
     }
   }
 
@@ -131,8 +148,9 @@ const ToolCard = styled.button<{ active: boolean }>`
   .tool-name {
     font-size: 1.25rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #2196F3;
     margin-top: 0.5rem;
+    transition: all 0.3s ease;
   }
 
   .tool-description {
@@ -141,6 +159,11 @@ const ToolCard = styled.button<{ active: boolean }>`
     color: var(--text-secondary);
     text-align: center;
     max-width: 85%;
+    transition: all 0.3s ease;
+  }
+  
+  &:hover .tool-name {
+    color: #1976D2;
   }
 `;
 
@@ -162,10 +185,10 @@ const HomePage: React.FC<HomePageProps> = ({ onToolSelect }) => {
       <Title onClick={() => setActive("")}>PDFMe</Title>
       <WelcomeSection>
         <h1>
-          The <span className="highlight">#1</span> most secure/fast app for
-          editing your pdf, zero API calls zero data collection.
+          The <span className="highlight">#1</span> fastest and most secure app for
+          editing pdfs, <span className="highlight">ZERO</span> data collection.
         </h1>
-        <h2 className="free-text">it's completely free</h2>
+        <h2 className="free-text">Everything is done offline & completely free</h2>
         <p>Choose a tool below to get started</p>
       </WelcomeSection>
 

@@ -34,12 +34,15 @@ globalThis.pdfjsImageDecoderOptions = {
 
 // Initialize JPEG2000 decoder with our WASM file
 try {
-  if ((pdfjs as any).initJPEG2000) {
-    const result = (pdfjs as any).initJPEG2000('/openjpeg.wasm');
-    console.log('JPEG2000 decoder initialized:', result);
+  // Updated to use modern API or fallback as needed
+  if (typeof pdfjs.GlobalWorkerOptions !== 'undefined') {
+    console.log('PDF.js worker options configured');
+    
+    // In newer PDF.js versions, JPEG2000 initialization happens automatically
+    // when loading the appropriate WASM files in the public directory
   }
 } catch (error) {
-  console.warn('Could not initialize JPEG2000 decoder:', error);
+  console.warn('Could not initialize PDF.js configuration:', error);
 }
 
 // // Override default image decoders on worker

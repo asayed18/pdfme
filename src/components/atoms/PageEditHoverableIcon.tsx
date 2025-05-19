@@ -63,22 +63,22 @@ const Container = styled.div.attrs<ContainerProps>((props) => ({
 `;
 
 const File = styled.rect`
-  fill: var(--text-secondary);
-  opacity: 0.4;
+  fill: #1976D2;
+  opacity: 0.6;
   transform-origin: center;
 `;
 
 const Page = styled.rect`
-  fill: var(--accent-color);
-  opacity: 0.7;
-  stroke: var(--text-secondary);
+  fill: #2196F3;
+  opacity: 0.8;
+  stroke: #4CAF50;
   stroke-width: 1;
   transform-origin: left center;
 `;
 
 const TextLine = styled.rect`
-  fill: var(--text-primary);
-  opacity: 0.3;
+  fill: #FFF;
+  opacity: 0.8;
   transform-origin: center;
 `;
 

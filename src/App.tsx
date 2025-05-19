@@ -5,7 +5,7 @@ import HomePage from './components/HomePage';
 import MergePDF from './components/MergePDF';
 import CompressPDF from './components/CompressPDF';
 import RemovePagesFromPDF from './components/RemovePagesFromPDF';
-import PlaceholderImage from './components/PlaceholderImage';
+import RocketFolderIcon from './components/RocketFolderIcon';
 import TwoColumnLayout from './components/layout/TwoColumnLayout';
 import { initGA, pageView } from './utils/analytics';
 
@@ -107,7 +107,7 @@ function App(): JSX.Element {
       case 'remove':
         return <RemovePagesFromPDF />;
       default:
-        return <PlaceholderImage />;
+        return <RocketFolderIcon />;
     }
   };
 

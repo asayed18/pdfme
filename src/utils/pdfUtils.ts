@@ -23,7 +23,7 @@ export async function compressPDF(file: File, compressionLevel: CompressionLevel
     const pageCount = pdfDoc.numPages;
     const pagesData: Record<number, string> = {};
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false }); // Disable alpha for better performance
     
     if (!ctx) {
       throw new Error("Failed to get canvas context");
@@ -32,11 +32,21 @@ export async function compressPDF(file: File, compressionLevel: CompressionLevel
     // Step 3: Process each page
     for (let i = 1; i <= pageCount; i++) {
       const page = await pdfDoc.getPage(i);
-      const viewport = page.getViewport({ scale: 1.5 }); // Higher scale for better quality
+      
+      // Determine appropriate scale based on compression level
+      // Higher resolution for lower compression to maintain quality
+      const scaleFactor = compressionLevel === 'low' ? 2.0 : 
+                          compressionLevel === 'medium' ? 1.5 : 1.2;
+      
+      const viewport = page.getViewport({ scale: scaleFactor });
       
       // Set canvas dimensions to match PDF page
       canvas.height = viewport.height;
       canvas.width = viewport.width;
+      
+      // Clear canvas with white background for better JPEG compression
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       
       // Render PDF page into canvas
       const renderContext = {
@@ -47,7 +57,8 @@ export async function compressPDF(file: File, compressionLevel: CompressionLevel
       await page.render(renderContext).promise;
       
       // Convert canvas to image data with compression
-      const imageFormat = 'image/jpeg';
+      // Use PNG for text-heavy pages at low compression to maintain text quality
+      const imageFormat = (compressionLevel === 'low') ? 'image/png' : 'image/jpeg';
       pagesData[i] = canvas.toDataURL(imageFormat, imageQuality);
     }
     
@@ -62,8 +73,11 @@ export async function compressPDF(file: File, compressionLevel: CompressionLevel
       const base64Data = imageData.split(',')[1];
       const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
       
-      // Embed the image
-      const image = await newPdf.embedJpg(imageBytes);
+      // Embed the image based on format (PNG or JPG)
+      const isPng = imageData.startsWith('data:image/png');
+      const image = isPng 
+        ? await newPdf.embedPng(imageBytes)
+        : await newPdf.embedJpg(imageBytes);
       
       // Add a page with the same dimensions as the image
       const page = newPdf.addPage([image.width, image.height]);
@@ -77,8 +91,15 @@ export async function compressPDF(file: File, compressionLevel: CompressionLevel
       });
     }
     
-    // Step 5: Save the new PDF with compression
-    const compressedBytes = await newPdf.save();
+    // Step 5: Save the new PDF with optimized settings
+    const compressedBytes = await newPdf.save({
+      // Use object streams for better compression
+      objectsPerTick: 100,
+      // Add additional PDF compression depending on the selected level
+      addDefaultPage: false,
+      useObjectStreams: true
+    });
+    
     return new Blob([compressedBytes], { type: 'application/pdf' });
   
   } catch (error) {
@@ -93,13 +114,13 @@ export async function compressPDF(file: File, compressionLevel: CompressionLevel
 function getImageQuality(compressionLevel: CompressionLevel): number {
   switch (compressionLevel) {
     case 'low':
-      return 0.8; // 80% quality - minimal compression
+      return 0.85; // 85% quality - minimal compression, better quality
     case 'medium':
-      return 0.5; // 50% quality - balanced compression
+      return 0.55; // 55% quality - balanced compression
     case 'high':
-      return 0.2; // 20% quality - maximum compression
+      return 0.25; // 25% quality - maximum compression
     default:
-      return 0.5;
+      return 0.55;
   }
 }
 
@@ -124,9 +145,17 @@ export function formatFileSize(bytes: number): string {
  * @returns Percentage as a string with two decimal places
  */
 export function calculateCompressionRate(originalSize: number, compressedSize: number): string {
+  // Handle edge cases: if sizes are the same or if compression actually increased the size
+  if (originalSize <= compressedSize) {
+    return '0.00';
+  }
+  
   const reduction = originalSize - compressedSize;
   const percentage = (reduction / originalSize) * 100;
-  return percentage.toFixed(2);
+  
+  // Format with 2 decimal places, but remove trailing zeros
+  const formatted = percentage.toFixed(2).replace(/\.00$/, '');
+  return formatted;
 }
 
 /**

@@ -26,7 +26,8 @@
 :root {
     --font-primary: 'Inter', sans-serif;
     --font-heading: 'Anta', sans-serif;
-    --bg-main: #0a0f1c;
+    /* --bg-main: #0a0f1c; */
+    --bg-main: #000000;
     --bg-secondary: #151c31;
     --bg-hover: #1e2642;
     --text-primary: #e2e8f0;

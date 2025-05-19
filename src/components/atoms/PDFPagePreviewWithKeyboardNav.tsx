@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import * as pdfjsLib from 'pdfjs-dist';
 import PDFWorkerPool from '../../utils/pdfWorkerPool';
-import { createPortal } from 'react-dom';
 import Modal from './Modal';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { pauseAnimations, resumeAnimations, fixDragTransforms } from '../../utils/dragUtils';
@@ -38,7 +37,7 @@ const PreviewContainer = styled.div`
   }
 `;
 
-const PageItem = styled.div<{ isSelected: boolean }>`
+const PageItem = styled.div<{ isSelected: boolean; isFocused?: boolean }>`
   position: relative;
   width: 160px;
   height: 226px; /* Approximate 4:3 ratio */
@@ -52,7 +51,8 @@ const PageItem = styled.div<{ isSelected: boolean }>`
   align-items: center;
   justify-content: center;
   margin-bottom: 0.5rem;
-  flex-shrink: 0; /* Prevent items from shrinking */
+  flex-shrink: 0;
+  outline: ${props => props.isFocused ? '2px dashed var(--accent-color)' : 'none'};
   filter: ${props => props.isSelected ? 'blur(1px) brightness(0.7)' : 'none'};
   
   &::after {
@@ -234,6 +234,37 @@ const ScrollButton = styled.button`
   }
 `;
 
+const ModalZoomControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 1rem;
+`;
+
+const ModalZoomButton = styled.button`
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: var(--accent-color-dark, #0056b3);
+  }
+`;
+
+const ModalZoomLevel = styled.span`
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+`;
+
 const KeyboardNavInfo = styled.div`
   background-color: var(--bg-secondary);
   border-radius: 0.5rem;
@@ -272,7 +303,7 @@ interface PDFPagePreviewProps {
   selectedPages: number[];
   onPagesSelect: (selectedPages: number[]) => void;
   onPagesReorder?: (newOrder: number[]) => void;
-  showKeyboardShortcuts?: boolean;
+  showKeyboardShortcuts?: boolean;  // New prop to toggle keyboard shortcut information
 }
 
 const PDFPagePreview = ({ 
@@ -290,17 +321,294 @@ const PDFPagePreview = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   
+  // Zoom modal state
   const [zoomModalOpen, setZoomModalOpen] = useState<boolean>(false);
   const [currentZoomPage, setCurrentZoomPage] = useState<number | null>(null);
   const [zoomScale, setZoomScale] = useState<number>(1.5);
   const zoomCanvasRef = useRef<HTMLCanvasElement | null>(null);
   
+  // Drag state
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  
+  // Keyboard navigation state
   const [focusedPageIndex, setFocusedPageIndex] = useState<number | null>(null);
   const [showKeyboardInfo, setShowKeyboardInfo] = useState<boolean>(showKeyboardShortcuts);
 
+  useEffect(() => {
+    const loadPDF = async () => {
+      try {
+        setLoadingPages(true);
+        
+        // Use ArrayBuffer to handle large PDFs better
+        const arrayBuffer = await file.arrayBuffer();
+        
+        const loadingTask = pdfjsLib.getDocument({
+          data: arrayBuffer,
+          // Use our worker pool
+          worker: PDFWorkerPool.getInstance().getWorker(0),
+          // Additional performance options
+          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+          wasmUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/wasm/',
+          cMapPacked: true,
+          enableXfa: false, // Disable XFA for better performance
+          disableRange: false,
+          disableAutoFetch: false,
+          disableStream: false,
+          disableFontFace: false,
+        });
+        
+        const doc = await loadingTask.promise;
+        setPdfDoc(doc);
+        setPageCount(doc.numPages);
+        
+        // Initialize page order (1-based indices)
+        const initialOrder = Array.from({ length: doc.numPages }, (_, i) => i + 1);
+        setPageOrder(initialOrder);
+        
+        // Pre-load visible pages
+        await loadVisiblePages(doc);
+        
+        setLoadingPages(false);
+      } catch (error) {
+        console.error('Error loading PDF:', error);
+        setLoadingPages(false);
+      }
+    };
+    
+    loadPDF();
+    
+    return () => {
+      // Clean up
+      if (pdfDoc) {
+        pdfDoc.destroy().catch(console.error);
+      }
+    };
+  }, [file]);
+
+  // Function to calculate optimal scale based on page dimensions
+  const calculateOptimalScale = (pageWidth: number, pageHeight: number, targetWidth: number = 160) => {
+    const scale = targetWidth / pageWidth;
+    
+    // For very large pages, use an even smaller scale for first-pass rendering
+    if (pageWidth * pageHeight > 5000000) {
+      return Math.min(scale, 0.3); // Cap at 0.3 for large pages
+    }
+    
+    return scale;
+  };
+
+  // Load pages that are visible in the viewport
+  const loadVisiblePages = async (doc: pdfjsLib.PDFDocumentProxy) => {
+    if (!containerRef.current) return;
+    
+    const container = containerRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const visiblePageIndices: number[] = [];
+    
+    // Check which page refs are in the visible area
+    pageRefs.current.forEach((pageRef, index) => {
+      if (!pageRef) return;
+      
+      const pageRect = pageRef.getBoundingClientRect();
+      
+      // Check if the page is in the viewport
+      if (
+        pageRect.bottom >= containerRect.top &&
+        pageRect.top <= containerRect.bottom
+      ) {
+        visiblePageIndices.push(index + 1); // Page indices start from 1
+      }
+    });
+    
+    // If no visible pages (initial render), load the first few pages
+    if (visiblePageIndices.length === 0) {
+      const initialPageCount = Math.min(doc.numPages, 10);
+      for (let i = 1; i <= initialPageCount; i++) {
+        visiblePageIndices.push(i);
+      }
+    }
+    
+    // Load pages that aren't already loaded
+    const pagesToLoad = visiblePageIndices.filter(pageIndex => !loadedPages.includes(pageIndex));
+    
+    if (pagesToLoad.length > 0) {
+      // Load pages in parallel using worker pool
+      await Promise.all(pagesToLoad.map(async (pageIndex) => {
+        try {
+          const page = await doc.getPage(pageIndex);
+          await renderPage(page, pageIndex);
+          page.cleanup();
+        } catch (error) {
+          console.error(`Error rendering page ${pageIndex}:`, error);
+        }
+      }));
+      
+      setLoadedPages(prev => [...prev, ...pagesToLoad]);
+    }
+  };
+
+  // Render a single page to its canvas
+  const renderPage = async (page: pdfjsLib.PDFPageProxy, pageIndex: number) => {
+    const canvas = document.getElementById(`page-canvas-${pageIndex}`) as HTMLCanvasElement;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const viewport = page.getViewport({ scale: 1 });
+    
+    // Calculate optimal scale based on page dimensions
+    const scale = calculateOptimalScale(viewport.width, viewport.height);
+    const scaledViewport = page.getViewport({ scale });
+    
+    // Set canvas dimensions to match the viewport
+    canvas.width = scaledViewport.width;
+    canvas.height = scaledViewport.height;
+    
+    try {
+      await page.render({
+        canvasContext: ctx,
+        viewport: scaledViewport,
+      }).promise;
+    } catch (error) {
+      console.error(`Error rendering page ${pageIndex}:`, error);
+      
+      // Try a fallback render with simpler options if the main render fails
+      try {
+        ctx.fillStyle = '#f8f8f8';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        await page.render({
+          canvasContext: ctx,
+          viewport: scaledViewport,
+        }).promise;
+      } catch (fallbackError) {
+        console.error(`Fallback rendering failed for page ${pageIndex}:`, fallbackError);
+        
+        // Draw an error message on the canvas
+        ctx.fillStyle = '#ffebee';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#d32f2f';
+        ctx.textAlign = 'center';
+        ctx.fillText('Error rendering page', canvas.width / 2, canvas.height / 2);
+      }
+    }
+  };
+
+  // Function to toggle page selection
+  const togglePageSelection = (pageIndex: number) => {
+    if (selectedPages.includes(pageIndex)) {
+      onPagesSelect(selectedPages.filter(index => index !== pageIndex));
+    } else {
+      onPagesSelect([...selectedPages, pageIndex]);
+    }
+  };
+
+  // Handle scroll event to load visible pages
+  const handleScroll = () => {
+    if (pdfDoc) {
+      loadVisiblePages(pdfDoc).catch(console.error);
+    }
+  };
+
+  // Scroll buttons functionality
+  const scrollToTop = () => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+  };
+
+  const scrollToBottom = () => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  };
+
+  // Zoom functionality
+  const openZoomModal = (pageIndex: number) => {
+    setCurrentZoomPage(pageIndex);
+    setZoomModalOpen(true);
+  };
+
+  const closeZoomModal = () => {
+    setZoomModalOpen(false);
+    setCurrentZoomPage(null);
+  };
+
+  // Render zoomed page
+  const renderZoomedPage = async () => {
+    if (!pdfDoc || currentZoomPage === null || !zoomCanvasRef.current) return;
+    
+    try {
+      const page = await pdfDoc.getPage(currentZoomPage);
+      const canvas = zoomCanvasRef.current;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) return;
+      
+      const viewport = page.getViewport({ scale: 1 });
+      
+      // Apply zoom scale to get higher resolution render
+      const scaledViewport = page.getViewport({ scale: zoomScale });
+      
+      // Set canvas dimensions to match the zoomed viewport
+      canvas.width = scaledViewport.width;
+      canvas.height = scaledViewport.height;
+      
+      try {
+        // Clear canvas before drawing
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // High-quality render for zoomed view
+        await page.render({
+          canvasContext: ctx,
+          viewport: scaledViewport,
+        }).promise;
+      } catch (error) {
+        console.error(`Error rendering zoomed page ${currentZoomPage}:`, error);
+        
+        // Fallback rendering
+        ctx.fillStyle = '#f8f8f8';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '18px Arial';
+        ctx.fillStyle = '#d32f2f';
+        ctx.textAlign = 'center';
+        ctx.fillText('Error rendering zoomed page', canvas.width / 2, canvas.height / 2);
+      }
+      
+      page.cleanup();
+    } catch (error) {
+      console.error(`Error getting page ${currentZoomPage} for zoomed view:`, error);
+    }
+  };
+
+  // Adjust zoom level
+  const increaseZoom = () => {
+    setZoomScale(prev => Math.min(prev + 0.5, 5));
+  };
+
+  const decreaseZoom = () => {
+    setZoomScale(prev => Math.max(prev - 0.5, 0.5));
+  };
+
+  // Scroll to page in the grid
+  const scrollToPage = (index: number) => {
+    const pageRef = pageRefs.current[index];
+    if (pageRef && containerRef.current) {
+      pageRef.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  };
+
+  // Toggle keyboard shortcuts info
+  const toggleKeyboardInfo = () => {
+    setShowKeyboardInfo(prev => !prev);
+  };
+
+  // Keyboard navigation handlers
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (zoomModalOpen && currentZoomPage !== null) {
+      // Keyboard shortcuts for zoom modal
       switch (e.key) {
         case '+':
         case '=':
@@ -338,6 +646,7 @@ const PDFPagePreview = ({
           break;
       }
     } else {
+      // Keyboard shortcuts for page navigation
       if (focusedPageIndex !== null) {
         switch (e.key) {
           case ' ':
@@ -361,14 +670,16 @@ const PDFPagePreview = ({
             break;
           case 'ArrowUp':
             e.preventDefault();
-            const rowSize = Math.floor(containerRef.current?.clientWidth / 180) || 5;
+            // Calculate approximate row size based on container width or use default of 5
+            const rowSize = containerRef.current ? Math.floor(containerRef.current.clientWidth / 180) || 5 : 5;
             const newIndex = Math.max(0, focusedPageIndex - rowSize);
             setFocusedPageIndex(newIndex);
             scrollToPage(newIndex);
             break;
           case 'ArrowDown':
             e.preventDefault();
-            const rowSizeDown = Math.floor(containerRef.current?.clientWidth / 180) || 5;
+            // Calculate approximate row size based on container width or use default of 5
+            const rowSizeDown = containerRef.current ? Math.floor(containerRef.current.clientWidth / 180) || 5 : 5;
             const newIndexDown = Math.min(pageOrder.length - 1, focusedPageIndex + rowSizeDown);
             setFocusedPageIndex(newIndexDown);
             scrollToPage(newIndexDown);
@@ -385,22 +696,20 @@ const PDFPagePreview = ({
             break;
         }
       } else if (pageOrder.length > 0 && e.key === 'Tab') {
+        // Set initial focus when tabbing into the component
         setFocusedPageIndex(0);
       }
     }
   }, [zoomModalOpen, currentZoomPage, focusedPageIndex, pageOrder, pageCount]);
 
-  const scrollToPage = (index: number) => {
-    const pageRef = pageRefs.current[index];
-    if (pageRef && containerRef.current) {
-      pageRef.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  // Effect to render zoomed page when modal is open or zoom level changes
+  useEffect(() => {
+    if (zoomModalOpen && currentZoomPage !== null) {
+      renderZoomedPage().catch(console.error);
     }
-  };
+  }, [zoomModalOpen, currentZoomPage, zoomScale]);
 
-  const toggleKeyboardInfo = () => {
-    setShowKeyboardInfo(prev => !prev);
-  };
-
+  // Effect to add keyboard event listeners
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => {
@@ -409,237 +718,59 @@ const PDFPagePreview = ({
   }, [handleKeyDown]);
 
   useEffect(() => {
-    const loadPDF = async () => {
-      try {
-        setLoadingPages(true);
-        const arrayBuffer = await file.arrayBuffer();
-        const loadingTask = pdfjsLib.getDocument({
-          data: arrayBuffer,
-          worker: PDFWorkerPool.getInstance().getWorker(0),
-          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
-          wasmUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/wasm/',
-          cMapPacked: true,
-          enableXfa: false,
-          disableRange: false,
-          disableAutoFetch: false,
-          disableStream: false,
-          disableFontFace: false,
-        });
-        const doc = await loadingTask.promise;
-        setPdfDoc(doc);
-        setPageCount(doc.numPages);
-        const initialOrder = Array.from({ length: doc.numPages }, (_, i) => i + 1);
-        setPageOrder(initialOrder);
-        await loadVisiblePages(doc);
-        setLoadingPages(false);
-      } catch (error) {
-        console.error('Error loading PDF:', error);
-        setLoadingPages(false);
-      }
-    };
-    loadPDF();
-    return () => {
-      if (pdfDoc) {
-        pdfDoc.destroy().catch(console.error);
-      }
-    };
-  }, [file]);
-
-  const calculateOptimalScale = (pageWidth: number, pageHeight: number, targetWidth: number = 160) => {
-    const scale = targetWidth / pageWidth;
-    if (pageWidth * pageHeight > 5000000) {
-      return Math.min(scale, 0.3);
-    }
-    return scale;
-  };
-
-  const loadVisiblePages = async (doc: pdfjsLib.PDFDocumentProxy) => {
-    if (!containerRef.current) return;
-    const container = containerRef.current;
-    const containerRect = container.getBoundingClientRect();
-    const visiblePageIndices: number[] = [];
-    pageRefs.current.forEach((pageRef, index) => {
-      if (!pageRef) return;
-      const pageRect = pageRef.getBoundingClientRect();
-      if (
-        pageRect.bottom >= containerRect.top &&
-        pageRect.top <= containerRect.bottom
-      ) {
-        visiblePageIndices.push(index + 1);
-      }
-    });
-    if (visiblePageIndices.length === 0) {
-      const initialPageCount = Math.min(doc.numPages, 10);
-      for (let i = 1; i <= initialPageCount; i++) {
-        visiblePageIndices.push(i);
-      }
-    }
-    const pagesToLoad = visiblePageIndices.filter(pageIndex => !loadedPages.includes(pageIndex));
-    if (pagesToLoad.length > 0) {
-      await Promise.all(pagesToLoad.map(async (pageIndex) => {
-        try {
-          const page = await doc.getPage(pageIndex);
-          await renderPage(page, pageIndex);
-          page.cleanup();
-        } catch (error) {
-          console.error(`Error rendering page ${pageIndex}:`, error);
-        }
-      }));
-      setLoadedPages(prev => [...prev, ...pagesToLoad]);
-    }
-  };
-
-  const renderPage = async (page: pdfjsLib.PDFPageProxy, pageIndex: number) => {
-    const canvas = document.getElementById(`page-canvas-${pageIndex}`) as HTMLCanvasElement;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const viewport = page.getViewport({ scale: 1 });
-    const scale = calculateOptimalScale(viewport.width, viewport.height);
-    const scaledViewport = page.getViewport({ scale });
-    canvas.width = scaledViewport.width;
-    canvas.height = scaledViewport.height;
-    try {
-      await page.render({
-        canvasContext: ctx,
-        viewport: scaledViewport,
-      }).promise;
-    } catch (error) {
-      console.error(`Error rendering page ${pageIndex}:`, error);
-      try {
-        ctx.fillStyle = '#f8f8f8';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        await page.render({
-          canvasContext: ctx,
-          viewport: scaledViewport,
-        }).promise;
-      } catch (fallbackError) {
-        console.error(`Fallback rendering failed for page ${pageIndex}:`, fallbackError);
-        ctx.fillStyle = '#ffebee';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.font = '14px Arial';
-        ctx.fillStyle = '#d32f2f';
-        ctx.textAlign = 'center';
-        ctx.fillText('Error rendering page', canvas.width / 2, canvas.height / 2);
-      }
-    }
-  };
-
-  const togglePageSelection = (pageIndex: number) => {
-    if (selectedPages.includes(pageIndex)) {
-      onPagesSelect(selectedPages.filter(index => index !== pageIndex));
-    } else {
-      onPagesSelect([...selectedPages, pageIndex]);
-    }
-  };
-
-  const handleScroll = () => {
-    if (pdfDoc) {
-      loadVisiblePages(pdfDoc).catch(console.error);
-    }
-  };
-
-  const scrollToTop = () => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = 0;
-    }
-  };
-
-  const scrollToBottom = () => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
-  };
-
-  const openZoomModal = (pageIndex: number) => {
-    setCurrentZoomPage(pageIndex);
-    setZoomModalOpen(true);
-  };
-
-  const closeZoomModal = () => {
-    setZoomModalOpen(false);
-    setCurrentZoomPage(null);
-  };
-
-  const renderZoomedPage = async () => {
-    if (!pdfDoc || currentZoomPage === null || !zoomCanvasRef.current) return;
-    try {
-      const page = await pdfDoc.getPage(currentZoomPage);
-      const canvas = zoomCanvasRef.current;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      const viewport = page.getViewport({ scale: 1 });
-      const scaledViewport = page.getViewport({ scale: zoomScale });
-      canvas.width = scaledViewport.width;
-      canvas.height = scaledViewport.height;
-      try {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        await page.render({
-          canvasContext: ctx,
-          viewport: scaledViewport,
-        }).promise;
-      } catch (error) {
-        console.error(`Error rendering zoomed page ${currentZoomPage}:`, error);
-        ctx.fillStyle = '#f8f8f8';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.font = '18px Arial';
-        ctx.fillStyle = '#d32f2f';
-        ctx.textAlign = 'center';
-        ctx.fillText('Error rendering zoomed page', canvas.width / 2, canvas.height / 2);
-      }
-      page.cleanup();
-    } catch (error) {
-      console.error(`Error getting page ${currentZoomPage} for zoomed view:`, error);
-    }
-  };
-
-  const increaseZoom = () => {
-    setZoomScale(prev => Math.min(prev + 0.5, 5));
-  };
-
-  const decreaseZoom = () => {
-    setZoomScale(prev => Math.max(prev - 0.5, 0.5));
-  };
-
-  useEffect(() => {
-    if (zoomModalOpen && currentZoomPage !== null) {
-      renderZoomedPage().catch(console.error);
-    }
-  }, [zoomModalOpen, currentZoomPage, zoomScale]);
-
-  useEffect(() => {
+    // Add scroll event listener
     const container = containerRef.current;
     if (container) {
       container.addEventListener('scroll', handleScroll);
     }
+    
     return () => {
+      // Clean up
       if (container) {
         container.removeEventListener('scroll', handleScroll);
       }
     };
   }, [pdfDoc, loadedPages]);
 
+  // Handle drag end
   const handleDragEnd = (result: any) => {
     setIsDragging(false);
+    
+    // Resume any paused animations
     if (containerRef.current) {
       resumeAnimations(containerRef.current);
     }
+
+    // Check if drag was valid
     if (!result.destination) return;
+    
+    // Skip if no change
     if (result.destination.index === result.source.index) return;
+    
+    // Reorder page order array
     const newOrder = Array.from(pageOrder);
     const [movedItem] = newOrder.splice(result.source.index, 1);
     newOrder.splice(result.destination.index, 0, movedItem);
+    
+    // Update state
     setPageOrder(newOrder);
+    
+    // Notify parent component
     if (onPagesReorder) {
       onPagesReorder(newOrder);
     }
   };
 
+  // Handle drag start
   const handleDragStart = () => {
     setIsDragging(true);
+    
+    // Pause animations during drag to avoid visual glitches
     if (containerRef.current) {
       pauseAnimations(containerRef.current);
     }
+    
+    // Apply additional drag transform fixes after a short delay
     setTimeout(() => {
       fixDragTransforms();
     }, 0);
@@ -666,7 +797,7 @@ const PDFPagePreview = ({
           <ul>
             <li>Use <kbd>Tab</kbd> to focus on the PDF pages grid</li>
             <li>Navigate between pages using <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd></li>
-            <li>Press <kbd>Space</kbd> or <kbd>Enter</kbd> to select/deselect a page</li>
+            <li>Press <kbd>Space</kbd> or <kbd>Enter</kbd> to mark/unmark a page for removal</li>
             <li>Press <kbd>Z</kbd> to open zoom view for the focused page</li>
             <li>In zoom view: <kbd>Ctrl</kbd>+<kbd>+</kbd> to zoom in, <kbd>Ctrl</kbd>+<kbd>-</kbd> to zoom out</li>
             <li>In zoom view: <kbd>←</kbd> <kbd>→</kbd> to navigate between pages</li>
@@ -716,6 +847,7 @@ const PDFPagePreview = ({
                       >
                         <PageItem 
                           isSelected={isSelected}
+                          isFocused={isFocused}
                           ref={el => {
                             if (pageNum > 0 && pageNum <= pageCount) {
                               pageRefs.current[pageNum - 1] = el;
@@ -724,7 +856,6 @@ const PDFPagePreview = ({
                           style={{
                             transform: dragSnapshot.isDragging ? 'rotate(2deg)' : undefined,
                             cursor: 'grab',
-                            outline: isFocused ? '2px dashed var(--accent-color)' : 'none',
                           }}
                           tabIndex={0}
                           role="checkbox"
@@ -782,6 +913,7 @@ const PDFPagePreview = ({
         </Droppable>
       </DragDropContext>
 
+      {/* Scroll controls */}
       <ScrollControls>
         <ScrollButton 
           onClick={scrollToTop} 
@@ -797,6 +929,7 @@ const PDFPagePreview = ({
         </ScrollButton>
       </ScrollControls>
 
+      {/* Zoom Modal */}
       {zoomModalOpen && currentZoomPage !== null && (
         <Modal
           isOpen={zoomModalOpen}
@@ -831,11 +964,11 @@ const PDFPagePreview = ({
                   {selectedPages.includes(currentZoomPage) ? 'Cancel removal' : 'Mark for removal'}
                 </button>
               </div>
-              <ZoomControls>
-                <ZoomButton onClick={decreaseZoom} title="Zoom out (Ctrl+-)">-</ZoomButton>
-                <ZoomLevel>{Math.round(zoomScale * 100)}%</ZoomLevel>
-                <ZoomButton onClick={increaseZoom} title="Zoom in (Ctrl++)">+</ZoomButton>
-              </ZoomControls>
+              <ModalZoomControls>
+                <ModalZoomButton onClick={decreaseZoom} title="Zoom out (Ctrl+-)">-</ModalZoomButton>
+                <ModalZoomLevel>{Math.round(zoomScale * 100)}%</ModalZoomLevel>
+                <ModalZoomButton onClick={increaseZoom} title="Zoom in (Ctrl++)">+</ModalZoomButton>
+              </ModalZoomControls>
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
               <button 

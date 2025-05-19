@@ -9,7 +9,7 @@ interface TwoColumnLayoutProps {
 const LayoutContainer = styled.div`
   display: flex;
   flex-direction: row;
-  min-height: 100vh;
+  max-height: 100vh;
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
