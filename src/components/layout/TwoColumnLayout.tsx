@@ -42,7 +42,7 @@ const RightColumn = styled.div`
   flex: 1;
   min-width: 0;
   padding: 2rem;
-  background: var(--bg-secondary);
+  # background: var(--bg-secondary);
   display: flex;
   align-items: center;
   justify-content: center;

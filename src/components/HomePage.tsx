@@ -37,7 +37,7 @@ const Title = styled.h1`
 const WelcomeSection = styled.div`
     text-align: center;
   h1 {
-    font-size: 2rem;
+    font-size: 1.2rem;
     font-weight: 700;
     margin-bottom: 1rem;
 
@@ -82,7 +82,7 @@ const ToolsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 2rem;
-  margin-top: 3rem;
+  margin-top: 0.5rem;
   width: 100%;
   max-width: 1200px;
   margin-left: auto;
@@ -102,7 +102,7 @@ const ToolCard = styled.button<{ active: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  # gap: 1.5rem;
   padding: 2rem;
   width: 100%;
   max-width: 320px;
@@ -157,6 +157,7 @@ const ToolCard = styled.button<{ active: boolean }>`
     font-size: 0.875rem;
     line-height: 1.5;
     color: var(--text-secondary);
+    opacity: 0.6;
     text-align: center;
     max-width: 85%;
     transition: all 0.3s ease;
@@ -188,9 +189,7 @@ const HomePage: React.FC<HomePageProps> = ({ onToolSelect }) => {
           The <span className="highlight">#1</span> fastest and most secure app for
           editing pdfs, <span className="highlight">ZERO</span> data collection.
         </h1>
-        <h2 className="free-text">Everything is done offline & completely free</h2>
-        <p>Choose a tool below to get started</p>
-      </WelcomeSection>
+        <h2 className="free-text">Everything is done offline & completely free</h2>      </WelcomeSection>
 
       <ToolsGrid>
         <ToolCard onClick={() => handleToolSelect("merge")} active={activeTool == "merge"}>

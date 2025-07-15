@@ -12,7 +12,7 @@ import GuidedTour, { TourStep } from './atoms/GuidedTour';
 const PageSelectionContainer = styled.div`
   margin: 1rem 0;
   padding: 1rem;
-  background: var(--bg-secondary);
+  #background: var(--bg-secondary);
   border-radius: 0.5rem;
   border: 1px solid var(--border-color);
 `;

@@ -31,6 +31,33 @@ const ThemeToggleContainer = styled.div`
   z-index: 10;
 `;
 
+const PageContentWrapper = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, 
+    rgba(33, 150, 243, 0.02) 0%, 
+    rgba(76, 175, 80, 0.02) 100%
+  );
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 
+              0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: auto;
+  
+  @media (max-width: 768px) {
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+  }
+`;
+
 // Google Analytics Measurement ID - replace with your actual ID
 const GA_MEASUREMENT_ID = 'GTM-KDSHQ3S2';
 
@@ -99,16 +126,20 @@ function App(): JSX.Element {
 
   // Render the appropriate content based on the current page
   const renderPageContent = (): JSX.Element => {
-    switch (currentPage) {
-      case 'merge':
-        return <MergePDF />;
-      case 'compress':
-        return <CompressPDF />;
-      case 'remove':
-        return <RemovePagesFromPDF />;
-      default:
-        return <RocketFolderIcon />;
-    }
+    const content = (() => {
+      switch (currentPage) {
+        case 'merge':
+          return <MergePDF />;
+        case 'compress':
+          return <CompressPDF />;
+        case 'remove':
+          return <RemovePagesFromPDF />;
+        default:
+          return <RocketFolderIcon />;
+      }
+    })();
+    
+    return <PageContentWrapper>{content}</PageContentWrapper>;
   };
 
   return (
