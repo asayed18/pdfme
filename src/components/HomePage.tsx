@@ -36,6 +36,7 @@ const Title = styled.h1`
 
 const WelcomeSection = styled.div`
     text-align: center;
+    padding: 0.2rem;
   h1 {
     font-size: 1.2rem;
     font-weight: 700;
@@ -104,9 +105,9 @@ const ToolCard = styled.button<{ active: boolean }>`
   align-items: center;
   # gap: 1.5rem;
   padding: 2rem;
-  width: 100%;
-  max-width: 320px;
-  margin: 0 auto;
+  // width: 100%;
+  // max-width: 320px;
+  margin: 1rem;
   background: linear-gradient(135deg, 
     rgba(33, 150, 243, 0.03) 0%, 
     rgba(76, 175, 80, 0.03) 100%
