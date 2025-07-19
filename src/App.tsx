@@ -5,6 +5,8 @@ import HomePage from './components/HomePage';
 import MergePDF from './components/MergePDF';
 import CompressPDF from './components/CompressPDF';
 import RemovePagesFromPDF from './components/RemovePagesFromPDF';
+import ExtractPDF from './components/ExtractPDF';
+import LockPDF from './components/LockPDF';
 import RocketFolderIcon from './components/RocketFolderIcon';
 import TwoColumnLayout from './components/layout/TwoColumnLayout';
 import { initGA, pageView } from './utils/analytics';
@@ -150,7 +152,7 @@ const PageContentWrapper = styled.div<{ isMobile: boolean; hasActiveTool: boolea
 const GA_MEASUREMENT_ID = 'GTM-KDSHQ3S2';
 
 // Define types for the page navigation
-type PageType = 'merge' | 'compress' | 'remove' | '';
+type PageType = 'merge' | 'compress' | 'remove' | 'extract' | 'lock' | '';
 type ThemeType = 'light' | 'dark';
 
 function App(): JSX.Element {
@@ -180,7 +182,7 @@ function App(): JSX.Element {
     // Handle hash changes for navigation
     const handleHashChange = (): void => {
       const hash = window.location.hash.substring(1) as PageType;
-      if (hash && ['merge', 'compress', 'remove'].includes(hash)) {
+      if (hash && ['merge', 'compress', 'remove', 'extract', 'lock'].includes(hash)) {
         setCurrentPage(hash);
       } else {
         setCurrentPage('');
@@ -234,6 +236,10 @@ function App(): JSX.Element {
           return <CompressPDF />;
         case 'remove':
           return <RemovePagesFromPDF />;
+        case 'extract':
+          return <ExtractPDF />;
+        case 'lock':
+          return <LockPDF />;
         default:
           return <RocketFolderIcon />;
       }

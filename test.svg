@@ -1,0 +1,23 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Left ring (incomplete, back part) -->
+  <path d="M110,160 
+           a50,50 0 1,1 70,-40" 
+        stroke="#7c766f" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <!-- Right ring (incomplete, back part) -->
+  <path d="M190,160 
+           a50,50 0 1,1 -70,40" 
+        stroke="#7c766f" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <!-- Left ring (incomplete, front part) -->
+  <path d="M110,160 
+           a50,50 0 0,0 70,40" 
+        stroke="#7c766f" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <!-- Right ring (incomplete, front part) -->
+  <path d="M190,160 
+           a50,50 0 0,0 -70,-40" 
+        stroke="#7c766f" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <!-- Sparkle/diamond (rounded) -->
+  <g>
+    <ellipse cx="220" cy="100" rx="10" ry="5" fill="#7c766f"/>
+    <ellipse cx="220" cy="100" rx="3" ry="8" fill="#7c766f" transform="rotate(45 220 100)"/>
+  </g>
+</svg>

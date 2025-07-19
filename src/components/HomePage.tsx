@@ -3,12 +3,15 @@ import styled from "styled-components";
 import MergeHoverableIcon from "./atoms/MergeHoverableIcon";
 import SqueezeHoverableIcon from "./atoms/SqueezeHoverableIcon";
 import PageEditHoverableIcon from "./atoms/PageEditHoverableIcon";
+import ExtractHoverableIcon from "./atoms/ExtractHoverableIcon";
+import LockHoverableIcon from "./atoms/LockHoverableIcon";
 
 const HomeContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2rem;
   width: 100%;
+  height: 100%;
 `;
 
 const Title = styled.h1`
@@ -30,20 +33,28 @@ const Title = styled.h1`
   letter-spacing: -1px;
   
   @media (max-width: 768px) {
-    font-size: 3rem;
+    font-size: 4.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 3.5rem;
+    margin-bottom: 0.75rem;
   }
 `;
 
 const WelcomeSection = styled.div`
-    text-align: center;
-    padding: 0.2rem;
+  text-align: center;
+  padding: 0.2rem;
+
   h1 {
     font-size: 1.2rem;
     font-weight: 700;
     margin-bottom: 1rem;
 
     @media (max-width: 768px) {
-      font-size: 2rem;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
     }
 
     .highlight {
@@ -59,7 +70,8 @@ const WelcomeSection = styled.div`
     text-shadow: 0 1px 2px rgba(76, 175, 80, 0.1);
 
     @media (max-width: 768px) {
-      font-size: 1.2rem;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
     }
   }
 
@@ -74,7 +86,9 @@ const WelcomeSection = styled.div`
     border: 1px solid rgba(33, 150, 243, 0.1);
 
     @media (max-width: 768px) {
-      font-size: 1rem;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      padding: 0.4rem 0.8rem;
     }
   }
 `;
@@ -88,14 +102,18 @@ const ToolsGrid = styled.div`
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
-
+  overflow-y: auto;
   @media (max-width: 768px) {
-    gap: 0.5rem;
-    margin-top: 2rem;
+    gap: 1rem;
+    margin-top: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0 0.5rem;
   }
   
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0;
   }
 `;
 
@@ -103,10 +121,8 @@ const ToolCard = styled.button<{ active: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
-  # gap: 1.5rem;
+  gap: 1rem;
   padding: 2rem;
-  // width: 100%;
-  // max-width: 320px;
   margin: 1rem;
   background: linear-gradient(135deg, 
     rgba(33, 150, 243, 0.03) 0%, 
@@ -123,6 +139,18 @@ const ToolCard = styled.button<{ active: boolean }>`
   backdrop-filter: blur(10px);
   transform: ${props => props.active ? "translateY(-4px)" : "none"};
   border-color: ${props => props.active ? "#2196F3" : "rgba(255, 255, 255, 0.1)"};
+
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+    margin: 0.5rem;
+    gap: 0.75rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1.25rem 0.75rem;
+    margin: 1rem 3.25rem;
+    gap: 0.5rem;
+  }
 
   &:hover, .active {
     border-color: #2196F3;
@@ -144,6 +172,16 @@ const ToolCard = styled.button<{ active: boolean }>`
     height: 10rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     color: var(--text-secondary);
+    
+    @media (max-width: 768px) {
+      width: 6rem;
+      height: 6rem;
+    }
+    
+    @media (max-width: 480px) {
+      width: 5rem;
+      height: 5rem;
+    }
   }
 
   .tool-name {
@@ -152,6 +190,17 @@ const ToolCard = styled.button<{ active: boolean }>`
     color: #2196F3;
     margin-top: 0.5rem;
     transition: all 0.3s ease;
+    text-align: center;
+    
+    @media (max-width: 768px) {
+      font-size: 1.1rem;
+      margin-top: 0.25rem;
+    }
+    
+    @media (max-width: 480px) {
+      font-size: 1rem;
+      margin-top: 0;
+    }
   }
 
   .tool-description {
@@ -162,6 +211,18 @@ const ToolCard = styled.button<{ active: boolean }>`
     text-align: center;
     max-width: 85%;
     transition: all 0.3s ease;
+    
+    @media (max-width: 768px) {
+      font-size: 0.8rem;
+      line-height: 1.4;
+      max-width: 90%;
+    }
+    
+    @media (max-width: 480px) {
+      font-size: 0.75rem;
+      line-height: 1.3;
+      max-width: 95%;
+    }
   }
   
   &:hover .tool-name {
@@ -169,7 +230,7 @@ const ToolCard = styled.button<{ active: boolean }>`
   }
 `;
 
-type ToolType = "merge" | "compress" | "remove";
+type ToolType = "merge" | "compress" | "remove" | "extract" | "lock";
 
 interface HomePageProps {
   onToolSelect: (tool: ToolType) => void;
@@ -214,6 +275,22 @@ const HomePage: React.FC<HomePageProps> = ({ onToolSelect }) => {
           <span className="tool-name">Remove Pages</span>
           <span className="tool-description">
             Delete unwanted pages from your PDF
+          </span>
+        </ToolCard>
+
+        <ToolCard onClick={() => handleToolSelect("extract")} active={activeTool == "extract"}>
+          <ExtractHoverableIcon size="10rem" />
+          <span className="tool-name">Extract Pages</span>
+          <span className="tool-description">
+            Extract selected pages into a new PDF document
+          </span>
+        </ToolCard>
+
+        <ToolCard onClick={() => handleToolSelect("lock")} active={activeTool == "lock"}>
+          <LockHoverableIcon size="10rem" />
+          <span className="tool-name">Lock PDF</span>
+          <span className="tool-description">
+            Protect your PDF with password encryption (Coming Soon)
           </span>
         </ToolCard>
       </ToolsGrid>

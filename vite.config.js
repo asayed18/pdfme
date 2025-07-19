@@ -5,6 +5,9 @@ import { resolve } from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    allowedHosts: true
+  },
   resolve: {
     alias: {
       // Add any aliases if needed
